@@ -10,14 +10,16 @@ const Layout = () => {
 
     return (
         <div>
-            {/*Navber*/}
-            {noHeaderFooter || <Navbar></Navbar>}
-                        {/*outlet*/}
-            <div className="min-h-[calc(100vh-306px)]">
-                <Outlet></Outlet>
+            {/* Navbar */}
+            {noHeaderFooter || <Navbar />}
+
+            {/* Outlet */}
+            <div className={`min-h-[calc(100vh-306px)] ${!noHeaderFooter ? 'mt-16' : ''}`}>
+                <Outlet />
             </div>
-            {/*Footer*/}
-            {noHeaderFooter || <Footer></Footer>}
+
+            {/* Footer */}
+            {noHeaderFooter || <Footer />}
         </div>
     );
 };
