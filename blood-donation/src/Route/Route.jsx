@@ -4,6 +4,7 @@ import Layout from '../Layout/Layout';
 import Home from '../Home/Home';
 import Error from '../Component/Error';
 import About from '../Component/About';
+import Register from '@/Pages/Register';
 
 
 const router = createBrowserRouter([
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
       path: 'about',
       element: <About></About>
 
+    },
+    {
+      path: 'register',
+      element: <Register></Register>
     }
     ]
   },

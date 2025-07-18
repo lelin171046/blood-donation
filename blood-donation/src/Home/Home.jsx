@@ -1,34 +1,55 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Users, Calendar, Award, Phone, Mail, MapPin } from 'lucide-react';
-import Card, { CardContent } from '@/components/ui/Card';
+import  {Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/button';
 
 
-
+const features = [
+  {
+    icon: <Heart className="h-12 w-12 text-red-600" />,
+    title: "Save Lives",
+    description: "Your blood donation can save up to three lives. Be a hero in someone's story.",
+  },
+  {
+    icon: <Users className="h-12 w-12 text-red-600" />,
+    title: "Connect Donors",
+    description: "Find compatible blood donors in your area quickly and efficiently.",
+  },
+  {
+    icon: <Calendar className="h-12 w-12 text-red-600" />,
+    title: "Easy Scheduling",
+    description: "Schedule your donation appointments at your convenience.",
+  },
+  {
+    icon: <Award className="h-12 w-12 text-red-600" />,
+    title: "Recognition",
+    description: "Get recognized for your noble contribution to society.",
+  },
+];
 export const Home = () => {
-  const features = [
-    {
-      icon: <Heart className="h-12 w-12 text-red-600" />,
-      title: "Save Lives",
-      description: "Your blood donation can save up to three lives. Be a hero in someone's story."
-    },
-    {
-      icon: <Users className="h-12 w-12 text-red-600" />,
-      title: "Connect Donors",
-      description: "Find compatible blood donors in your area quickly and efficiently."
-    },
-    {
-      icon: <Calendar className="h-12 w-12 text-red-600" />,
-      title: "Easy Scheduling",
-      description: "Schedule your donation appointments at your convenience."
-    },
-    {
-      icon: <Award className="h-12 w-12 text-red-600" />,
-      title: "Recognition",
-      description: "Get recognized for your noble contribution to society."
-    }
-  ];
+//   const features = [
+//     {
+//       icon: <Heart className="h-12 w-12 text-red-600" />,
+//       title: "Save Lives",
+//       description: "Your blood donation can save up to three lives. Be a hero in someone's story."
+//     },
+//     {
+//       icon: <Users className="h-12 w-12 text-red-600" />,
+//       title: "Connect Donors",
+//       description: "Find compatible blood donors in your area quickly and efficiently."
+//     },
+//     {
+//       icon: <Calendar className="h-12 w-12 text-red-600" />,
+//       title: "Easy Scheduling",
+//       description: "Schedule your donation appointments at your convenience."
+//     },
+//     {
+//       icon: <Award className="h-12 w-12 text-red-600" />,
+//       title: "Recognition",
+//       description: "Get recognized for your noble contribution to society."
+//     }
+//   ];
 
   return (
     <div className="min-h-screen">
@@ -70,25 +91,23 @@ export const Home = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => {
-              return (
-              <Card key={index} className="text-center p-6 hover:shadow-lg transition-shadow">
-                <CardContent>
-                  <div className="flex justify-center mb-4">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
-              );
-            })}
-          </div>
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4 py-8">
+      {features.map((feature, index) => (
+        <Card key={index} className="text-center p-6 hover:shadow-lg transition-shadow">
+          <CardContent>
+            <div className="flex justify-center mb-4">
+              {feature.icon}
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              {feature.title}
+            </h3>
+            <p className="text-gray-600">
+              {feature.description}
+            </p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
         </div>
       </section>
 
@@ -138,7 +157,7 @@ export const Home = () => {
               </div>
             </div>
 
-            {/* <Card className="p-6">
+            <Card className="p-6">
               <form className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -174,7 +193,7 @@ export const Home = () => {
                   Send Message
                 </Button>
               </form>
-            </Card> */}
+            </Card>
           </div>
         </div>
       </section>
