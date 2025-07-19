@@ -55,7 +55,7 @@ export const Navbar = () => {
                   className="flex items-center space-x-2 text-gray-700 hover:text-red-600 focus:outline-none"
                 >
                   <img
-                    src={user.avatar}
+                    src={user?.photoURL}
                     alt={user.name}
                     className="h-8 w-8 rounded-full object-cover"
                   />
@@ -124,7 +124,7 @@ export const Navbar = () => {
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex items-center px-3 py-2">
                     <img
-                      src={user.avatar}
+                      src={user.avatar || user?.photoURL}
                       alt={user.name}
                       className="h-8 w-8 rounded-full object-cover mr-3"
                     />
