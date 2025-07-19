@@ -10,11 +10,11 @@ import { Button } from '@/components/ui/button';
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logOut } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
+    logOut();
     navigate('/');
     setShowUserMenu(false);
   };

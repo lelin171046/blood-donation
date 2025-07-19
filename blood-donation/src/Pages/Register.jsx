@@ -4,16 +4,16 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useForm, Controller } from "react-hook-form"
 import { Helmet } from "react-helmet"
+import useAuth from "@/Hook/useAuth"
 import toast from "react-hot-toast"
 import { CitySelect, CountrySelect, StateSelect } from "react-country-state-city"
-import useAuth from "@/Hook/useAuth"
-import useAxiosPublic from "@/Hook/useAxiosPublic"
+import { uploadToImgBB } from "@/Share/ImageUpload"
 
 const Register = () => {
   const { createUser, updateUserProfile } = useAuth()
   const navigate = useNavigate()
   const [avatarPreview, setAvatarPreview] = useState(null)
-  const axiosPublic = useAxiosPublic()
+  const [uploading, setUploading] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
 
   // Location state for country-state-city
@@ -27,6 +27,7 @@ const Register = () => {
     reset,
     control,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
@@ -35,7 +36,7 @@ const Register = () => {
       bloodGroup: "",
       password: "",
       confirmPassword: "",
-      avatar: "",
+      avatar: null,
       country: "",
       district: "",
       upazila: "",
@@ -43,40 +44,48 @@ const Register = () => {
   })
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
-
-  // Watch password for confirmation validation
   const password = watch("password")
-const img_hosting_key = import.meta.env.VITE_Image_Key;
-const img_hosting_api = `https://api.imgbb.com/1/upload?key=${img_hosting_key}`;
 
   const onSubmit = async (data) => {
     try {
       console.log("Form Data:", data)
 
-      // Validate password confirmation
       if (data.password !== data.confirmPassword) {
         setErrorMsg("Passwords do not match")
         return
       }
 
-      // Clear any previous error messages
       setErrorMsg("")
 
-       const imageFile = { image: data.image[0] };
-    const res = await axiosPublic.post(img_hosting_api, imageFile, {
-      headers: { 'content-type': 'multipart/form-data' }
-    });
-
-      // Create user with Firebase
+      // Create user with Firebase first
       const result = await createUser(data.email, data.password)
       const loggedUser = result.user
       console.log("User created:", loggedUser)
 
-      // Update user profile
-      await updateUserProfile(data.name, data.avatar || null)
-      console.log("Profile updated")
+      // Handle profile picture upload
+      let photoURL = null
+      if (data.avatar && data.avatar[0]) {
+        try {
+          setUploading(true)
+          const uploadResult = await uploadToImgBB(data.avatar[0])
+          photoURL = uploadResult.url
+          console.log("Image uploaded successfully:", photoURL)
+        } catch (uploadError) {
+          console.error("Image upload failed:", uploadError)
+          toast.error(`Image upload failed: ${uploadError.message}`)
+          // Continue without photo
+        } finally {
+          setUploading(false)
+        }
+      }
 
-      // Here you can save additional user data to your database
+      // Update Firebase user profile
+      if (data.name || photoURL) {
+        await updateUserProfile(data.name || null, photoURL || null)
+        console.log("Profile updated successfully")
+      }
+
+      // Save user data to your database (if you have a backend)
       const userData = {
         uid: loggedUser.uid,
         name: data.name,
@@ -85,15 +94,25 @@ const img_hosting_api = `https://api.imgbb.com/1/upload?key=${img_hosting_key}`;
         country: country?.name || "",
         district: state?.name || "",
         upazila: city?.name || "",
-        avatar: data.avatar || "",
+        photoURL: photoURL || "",
+        phone: "", // Add phone field if needed
+        lastDonation: null,
+        availability: "Available",
+        status: "active",
         createdAt: new Date().toISOString(),
       }
 
-      // Save to your database (implement this function)
-      // await saveUserToDatabase(userData);
+      // If you have a backend API, save user data
+      // try {
+      //   await axios.post('http://localhost:5000/api/users/register', userData)
+      //   console.log('User data saved to database')
+      // } catch (dbError) {
+      //   console.error('Database save error:', dbError)
+      // }
 
       toast.success("Account created successfully!")
       reset()
+      setAvatarPreview(null)
       navigate("/")
     } catch (error) {
       console.error("Registration error:", error)
@@ -105,11 +124,27 @@ const img_hosting_api = `https://api.imgbb.com/1/upload?key=${img_hosting_key}`;
   const handleAvatarChange = (e) => {
     const file = e.target.files[0]
     if (file) {
+      // Validate file size (ImgBB free limit is 32MB, but we'll use 5MB for better UX)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB")
+        return
+      }
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select a valid image file")
+        return
+      }
+
+      // Set preview
       const reader = new FileReader()
       reader.onloadend = () => {
         setAvatarPreview(reader.result)
       }
       reader.readAsDataURL(file)
+
+      // Update form value
+      setValue("avatar", e.target.files)
     }
   }
 
@@ -195,17 +230,35 @@ const img_hosting_api = `https://api.imgbb.com/1/upload?key=${img_hosting_key}`;
                 <input
                   type="file"
                   accept="image/*"
-                  {...register("avatar")}
                   onChange={handleAvatarChange}
                   className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent"
                 />
+                <p className="text-xs text-gray-500 mt-1">Max size: 5MB. Supported formats: JPG, PNG, GIF, WebP</p>
+
                 {avatarPreview && (
-                  <div className="mt-2">
+                  <div className="mt-3 flex items-center gap-3">
                     <img
                       src={avatarPreview || "/placeholder.svg"}
                       alt="Avatar Preview"
-                      className="w-16 h-16 rounded-full object-cover"
+                      className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
                     />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAvatarPreview(null)
+                        setValue("avatar", null)
+                      }}
+                      className="text-red-600 text-sm hover:text-red-800"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+
+                {uploading && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-sm text-blue-600">Uploading to ImgBB...</span>
                   </div>
                 )}
               </div>
@@ -333,10 +386,10 @@ const img_hosting_api = `https://api.imgbb.com/1/upload?key=${img_hosting_key}`;
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || uploading}
                 className="w-full bg-red-600 text-white p-4 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-lg"
               >
-                {isSubmitting ? "Creating Account..." : "Create Account"}
+                {isSubmitting ? "Creating Account..." : uploading ? "Uploading Image..." : "Create Account"}
               </button>
             </div>
           </form>
