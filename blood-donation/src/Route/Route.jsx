@@ -10,6 +10,8 @@ import DashboardPage from '@/Dashboard/DashboardPage';
 import DonationRequestsPage from '@/Pages/DonationRequest';
 import DonationRequestDetailsPage from '@/Pages/DonationRequestDetails';
 import Blog from '@/Pages/Blog';
+import Funding from '@/Pages/Funding';
+import SearchPage from '@/Pages/SearchPage';
 
 
 const router = createBrowserRouter([
@@ -49,6 +51,14 @@ const router = createBrowserRouter([
   {
     path: 'blog',
     element: <Blog></Blog>
+  },
+  {
+    path: 'funding',
+    element: <Funding></Funding>
+  },
+  {
+    path: 'search',
+    element: <SearchPage></SearchPage>
   }
     ]
   },
