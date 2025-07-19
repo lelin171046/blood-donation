@@ -1,216 +1,382 @@
-import React, { useState } from "react";
-import axios from "axios";
-import { useMutation } from "@tanstack/react-query";
-import { CountrySelect } from "react-country-state-city";
+"use client"
 
-const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-const districts = {
-  Dhaka: ["Dhanmondi", "Mirpur", "Gulshan"],
-  Chittagong: ["Pahartali", "Kotwali", "Panchlaish"],
-  Rajshahi: ["Boalia", "Rajpara", "Shah Makhdum"],
-};
+import { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { useForm, Controller } from "react-hook-form"
+import { Helmet } from "react-helmet"
+import toast from "react-hot-toast"
+import { CitySelect, CountrySelect, StateSelect } from "react-country-state-city"
+import useAuth from "@/Hook/useAuth"
+import useAxiosPublic from "@/Hook/useAxiosPublic"
 
 const Register = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    name: "",
-    avatar: "",
-    bloodGroup: "",
-    district: "",
-    upazila: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const { createUser, updateUserProfile } = useAuth()
+  const navigate = useNavigate()
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const axiosPublic = useAxiosPublic()
+  const [errorMsg, setErrorMsg] = useState("")
 
-  const [avatarPreview, setAvatarPreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
- const [country, setCountry] = useState(null);
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  // Location state for country-state-city
+  const [country, setCountry] = useState(null)
+  const [state, setState] = useState(null)
+  const [city, setCity] = useState(null)
 
-  // Upload avatar to imageBB
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploading(true);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    defaultValues: {
+      name: "",
+      email: "",
+      bloodGroup: "",
+      password: "",
+      confirmPassword: "",
+      avatar: "",
+      country: "",
+      district: "",
+      upazila: "",
+    },
+  })
 
-    const imageData = new FormData();
-    imageData.append("image", file);
+  const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
 
+  // Watch password for confirmation validation
+  const password = watch("password")
+const img_hosting_key = import.meta.env.VITE_Image_Key;
+const img_hosting_api = `https://api.imgbb.com/1/upload?key=${img_hosting_key}`;
+
+  const onSubmit = async (data) => {
     try {
-      const res = await axios.post(
-        `https://api.imgbb.com/1/upload?key=YOUR_IMGBB_API_KEY`,
-        imageData
-      );
-      const imageUrl = res.data.data.url;
-      setFormData((prev) => ({ ...prev, avatar: imageUrl }));
-      setAvatarPreview(imageUrl);
-    } catch (err) {
-      setErrorMsg("Image upload failed");
-    } finally {
-      setUploading(false);
+      console.log("Form Data:", data)
+
+      // Validate password confirmation
+      if (data.password !== data.confirmPassword) {
+        setErrorMsg("Passwords do not match")
+        return
+      }
+
+      // Clear any previous error messages
+      setErrorMsg("")
+
+       const imageFile = { image: data.image[0] };
+    const res = await axiosPublic.post(img_hosting_api, imageFile, {
+      headers: { 'content-type': 'multipart/form-data' }
+    });
+
+      // Create user with Firebase
+      const result = await createUser(data.email, data.password)
+      const loggedUser = result.user
+      console.log("User created:", loggedUser)
+
+      // Update user profile
+      await updateUserProfile(data.name, data.avatar || null)
+      console.log("Profile updated")
+
+      // Here you can save additional user data to your database
+      const userData = {
+        uid: loggedUser.uid,
+        name: data.name,
+        email: data.email,
+        bloodGroup: data.bloodGroup,
+        country: country?.name || "",
+        district: state?.name || "",
+        upazila: city?.name || "",
+        avatar: data.avatar || "",
+        createdAt: new Date().toISOString(),
+      }
+
+      // Save to your database (implement this function)
+      // await saveUserToDatabase(userData);
+
+      toast.success("Account created successfully!")
+      reset()
+      navigate("/")
+    } catch (error) {
+      console.error("Registration error:", error)
+      setErrorMsg(error.message || "Registration failed. Please try again.")
+      toast.error(error.message || "Registration failed")
     }
-  };
+  }
 
-  // Mutation for registration
-  const mutation = useMutation({
-    mutationFn: async (payload) => {
-      const res = await axios.post("/api/register", payload); // adjust endpoint
-      return res.data;
-    },
-    onSuccess: () => {
-      setErrorMsg("Registration successful!");
-      // optionally reset form or redirect
-    },
-    onError: (err) => {
-      setErrorMsg("Registration failed. Please try again.");
-    },
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setErrorMsg("");
-
-    if (formData.password !== formData.confirmPassword) {
-      setErrorMsg("Passwords do not match.");
-      return;
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result)
+      }
+      reader.readAsDataURL(file)
     }
-
-    const payload = {
-      ...formData,
-      role: "donor",
-      status: "active",
-    };
-
-    mutation.mutate(payload);
-  };
+  }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white shadow-lg rounded-md">
-      <h2 className="text-2xl font-bold mb-4 text-center">Register as a Donor</h2>
+    <>
+      <Helmet>
+        <title>Blood Center || Register</title>
+      </Helmet>
 
-      {errorMsg && <p className="text-red-600 text-center mb-4">{errorMsg}</p>}
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+        <div className="bg-white shadow-lg rounded-lg w-full max-w-4xl p-8">
+          <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Create Your Account</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="name"
-          placeholder="Full Name"
-          value={formData.name}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-          required
-        />
-
-        <input
-          type="email"
-          name="email"
-          placeholder="Email Address"
-          value={formData.email}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-          required
-        />
-
-        {/* Avatar Upload */}
-        <div>
-          <input type="file" accept="image/*" onChange={handleAvatarChange} />
-          {uploading && <p className="text-gray-500 text-sm">Uploading image...</p>}
-          {avatarPreview && (
-            <img src={avatarPreview} alt="Preview" className="w-20 h-20 mt-2 rounded-full" />
+          {/* Error Message */}
+          {errorMsg && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">{errorMsg}</div>
           )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Row 1: Personal Information */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Name Field */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Full Name *</label>
+                <input
+                  type="text"
+                  {...register("name", {
+                    required: "Name is required",
+                    minLength: {
+                      value: 2,
+                      message: "Name must be at least 2 characters",
+                    },
+                  })}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                  placeholder="Enter your full name"
+                />
+                {errors.name && <span className="text-red-500 text-sm mt-1 block">{errors.name.message}</span>}
+              </div>
+
+              {/* Email Field */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Email Address *</label>
+                <input
+                  type="email"
+                  {...register("email", {
+                    required: "Email is required",
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "Invalid email address",
+                    },
+                  })}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                  placeholder="Enter your email"
+                />
+                {errors.email && <span className="text-red-500 text-sm mt-1 block">{errors.email.message}</span>}
+              </div>
+            </div>
+
+            {/* Row 2: Blood Group and Avatar */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Blood Group Field */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Blood Group *</label>
+                <select
+                  {...register("bloodGroup", { required: "Blood group is required" })}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                >
+                  <option value="">Select Blood Group</option>
+                  {bloodGroups.map((group) => (
+                    <option key={group} value={group}>
+                      {group}
+                    </option>
+                  ))}
+                </select>
+                {errors.bloodGroup && (
+                  <span className="text-red-500 text-sm mt-1 block">{errors.bloodGroup.message}</span>
+                )}
+              </div>
+
+              {/* Avatar Upload */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Profile Picture (Optional)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  {...register("avatar")}
+                  onChange={handleAvatarChange}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                />
+                {avatarPreview && (
+                  <div className="mt-2">
+                    <img
+                      src={avatarPreview || "/placeholder.svg"}
+                      alt="Avatar Preview"
+                      className="w-16 h-16 rounded-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Row 3: Location Fields */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">Location *</label>
+              <div className="grid md:grid-cols-3 gap-4">
+                {/* Country */}
+                <div>
+                  <Controller
+                    name="country"
+                    control={control}
+                    rules={{ required: "Country is required" }}
+                    render={({ field }) => (
+                      <CountrySelect
+                        containerClassName="form-group"
+                        inputClassName="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                        onChange={(val) => {
+                          setCountry(val)
+                          setState(null)
+                          setCity(null)
+                          field.onChange(val?.name || "")
+                        }}
+                        placeHolder="Select Country"
+                      />
+                    )}
+                  />
+                  {errors.country && <span className="text-red-500 text-sm mt-1 block">{errors.country.message}</span>}
+                </div>
+
+                {/* District (State) */}
+                <div>
+                  <Controller
+                    name="district"
+                    control={control}
+                    rules={{ required: "District is required" }}
+                    render={({ field }) => (
+                      <StateSelect
+                        countryid={country?.id}
+                        onChange={(val) => {
+                          setState(val)
+                          setCity(null)
+                          field.onChange(val?.name || "")
+                        }}
+                        inputClassName="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                        placeHolder="Select District"
+                      />
+                    )}
+                  />
+                  {errors.district && (
+                    <span className="text-red-500 text-sm mt-1 block">{errors.district.message}</span>
+                  )}
+                </div>
+
+                {/* Upazila (City) */}
+                <div>
+                  <Controller
+                    name="upazila"
+                    control={control}
+                    rules={{ required: "Upazila is required" }}
+                    render={({ field }) => (
+                      <CitySelect
+                        countryid={country?.id}
+                        stateid={state?.id}
+                        onChange={(val) => {
+                          setCity(val)
+                          field.onChange(val?.name || "")
+                        }}
+                        inputClassName="w-full border border-gray-300 p-3 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                        placeHolder="Select Upazila"
+                      />
+                    )}
+                  />
+                  {errors.upazila && <span className="text-red-500 text-sm mt-1 block">{errors.upazila.message}</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Row 4: Password Fields */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Password Field */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Password *</label>
+                <input
+                  type="password"
+                  {...register("password", {
+                    required: "Password is required",
+                    minLength: {
+                      value: 6,
+                      message: "Password must be at least 6 characters",
+                    },
+                    pattern: {
+                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                      message:
+                        "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+                    },
+                  })}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                  placeholder="Enter your password"
+                />
+                {errors.password && <span className="text-red-500 text-sm mt-1 block">{errors.password.message}</span>}
+              </div>
+
+              {/* Confirm Password Field */}
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Confirm Password *</label>
+                <input
+                  type="password"
+                  {...register("confirmPassword", {
+                    required: "Please confirm your password",
+                    validate: (value) => value === password || "Passwords do not match",
+                  })}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent"
+                  placeholder="Confirm your password"
+                />
+                {errors.confirmPassword && (
+                  <span className="text-red-500 text-sm mt-1 block">{errors.confirmPassword.message}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-red-600 text-white p-4 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-lg"
+              >
+                {isSubmitting ? "Creating Account..." : "Create Account"}
+              </button>
+            </div>
+          </form>
+
+          {/* Login Link */}
+          <p className="text-center text-gray-600 text-sm mt-6">
+            Already have an account?
+            <Link to={"/login"} className="text-red-600 hover:text-red-700 font-medium ml-1">
+              Sign In
+            </Link>
+          </p>
+
+          {/* Social Login */}
+          <div className="text-center mt-6">
+            <p className="text-gray-600 mb-4">Or sign up with</p>
+            <div className="flex justify-center space-x-4">
+              <button
+                type="button"
+                aria-label="Sign up with Google"
+                className="p-3 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-5 h-5 fill-current">
+                  <path d="M16.318 13.714v5.484h9.078c-0.37 2.354-2.745 6.901-9.078 6.901-5.458 0-9.917-4.521-9.917-10.099s4.458-10.099 9.917-10.099c3.109 0 5.193 1.318 6.38 2.464l4.339-4.182c-2.786-2.599-6.396-4.182-10.719-4.182-8.844 0-16 7.151-16 16s7.156 16 16 16c9.234 0 15.365-6.49 15.365-15.635 0-1.052-0.115-1.854-0.255-2.651z"></path>
+                </svg>
+              </button>
+              <button
+                type="button"
+                aria-label="Sign up with GitHub"
+                className="p-3 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-5 h-5 fill-current">
+                  <path d="M16 0.396c-8.839 0-16 7.167-16 16 0 7.073 4.584 13.068 10.937 15.183 0.803 0.151 1.093-0.344 1.093-0.772 0-0.38-0.009-1.385-0.015-2.719-4.453 0.964-5.391-2.151-5.391-2.151-0.729-1.844-1.781-2.339-1.781-2.339-1.448-0.989 0.115-0.968 0.115-0.968 1.604 0.109 2.448 1.645 2.448 1.645 1.427 2.448 3.744 1.74 4.661 1.328 0.14-1.031 0.557-1.74 1.011-2.135-3.552-0.401-7.287-1.776-7.287-7.907 0-1.751 0.62-3.177 1.645-4.297-0.177-0.401-0.719-2.031 0.141-4.235 0 0 1.339-0.427 4.4 1.641 1.281-0.355 2.641-0.532 4-0.541 1.36 0.009 2.719 0.187 4 0.541 3.043-2.068 4.381-1.641 4.381-1.641 0.859 2.204 0.317 3.833 0.161 4.235 1.015 1.12 1.635 2.547 1.635 4.297 0 6.145-3.74 7.5-7.296 7.891 0.556 0.479 1.077 1.464 1.077 2.959 0 2.14-0.020 3.864-0.020 4.385 0 0.416 0.28 0.916 1.104 0.755 6.4-2.093 10.979-8.093 10.979-15.156 0-8.833-7.161-16-16-16z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
+    </>
+  )
+}
 
-        {/* Blood Group */}
-        <select
-          name="bloodGroup"
-          value={formData.bloodGroup}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-          required
-        >
-          <option value="">Select Blood Group</option>
-          {bloodGroups.map((group) => (
-            <option key={group} value={group}>
-              {group}
-            </option>
-          ))}
-        </select>
-
-        {/* District */}
-        {/* <select
-          name="district"
-          value={formData.district}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-          required
-        >
-          <option value="">Select District</option>
-          {Object.keys(districts).map((d) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </select> */}
-        <CountrySelect
-        containerClassName="form-group"
-        inputClassName="w-full border p-2 rounded"
-        onChange={(_country) => setCountry(_country)}
-        onTextChange={(_txt) => console.log(_txt)}
-        placeHolder="Select Country"
-      />
-        {/* Upazila */}
-        <select
-          name="upazila"
-          value={formData.upazila}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-          disabled={!formData.district}
-          required
-        >
-          <option value="">Select Upazila</option>
-          {formData.district &&
-            districts[formData.district].map((upz) => (
-              <option key={upz} value={upz}>
-                {upz}
-              </option>
-            ))}
-        </select>
-
-        {/* Password */}
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-          required
-        />
-
-        <input
-          type="password"
-          name="confirmPassword"
-          placeholder="Confirm Password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          className="w-full border p-2 rounded"
-          required
-        />
-
-        <button
-          type="submit"
-          disabled={mutation.isLoading}
-          className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 transition"
-        >
-          {mutation.isLoading ? "Registering..." : "Register"}
-        </button>
-      </form>
-    </div>
-  );
-};
-
-export default Register;
+export default Register
