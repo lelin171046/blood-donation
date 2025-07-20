@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react';
+import { Heart, Menu, X, User, LogOut, LayoutDashboard, GitPullRequestDraftIcon } from 'lucide-react';
 import useAuth from '@/Hook/useAuth';
 import { Button } from '@/components/ui/button';
 
@@ -72,6 +72,22 @@ export const Navbar = () => {
                       <LayoutDashboard className="h-4 w-4 mr-2" />
                       Dashboard
                     </Link>
+                    <Link
+                      to="/donor-dashboard"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                     Donor Dashboard
+                    </Link>
+                    <Link
+                    to="/my-donation-requests"
+                    className="flex items-center px-3 py-2 text-gray-700 hover:text-red-600"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <GitPullRequestDraftIcon className="h-4 w-4 mr-2" />
+                    My Donation Requests
+                  </Link>
                     <button
                       onClick={handleLogout}
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -137,6 +153,22 @@ export const Navbar = () => {
                   >
                     <LayoutDashboard className="h-4 w-4 mr-2" />
                     Dashboard
+                  </Link>
+                  <Link
+                      to="/donor-dashboard"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                     Donor Dashboard
+                    </Link>
+                  <Link
+                    to="/my-donation-requests"
+                    className="flex items-center px-3 py-2 text-gray-700 hover:text-red-600"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <LayoutDashboard className="h-4 w-4 mr-2" />
+                    My Donation Requests
                   </Link>
                   <button
                     onClick={handleLogout}

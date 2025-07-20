@@ -12,6 +12,9 @@ import DonationRequestDetailsPage from '@/Pages/DonationRequestDetails';
 import Blog from '@/Pages/Blog';
 import Funding from '@/Pages/Funding';
 import SearchPage from '@/Pages/SearchPage';
+import MyDonationRequests from '@/Pages/MyDonationRequests';
+import DonorDashboard from '@/Dashboard/DonorDashboard';
+import CreateRequest from '@/Pages/CreateRequest';
 
 
 const router = createBrowserRouter([
@@ -59,7 +62,20 @@ const router = createBrowserRouter([
   {
     path: 'search',
     element: <SearchPage></SearchPage>
+  },
+  {
+    path: 'my-donation-requests',
+    element: <MyDonationRequests></MyDonationRequests>
+  },
+  {
+    path: 'donor-dashboard',
+    element: <DonorDashboard></DonorDashboard>
+  },
+  {
+    path: 'create-request',
+    element: <CreateRequest></CreateRequest>
   }
+
     ]
   },
 ]);
