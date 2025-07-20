@@ -1,4 +1,3 @@
-"use client"
 
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
@@ -8,6 +7,7 @@ import useAuth from "@/Hook/useAuth"
 import toast from "react-hot-toast"
 import { CitySelect, CountrySelect, StateSelect } from "react-country-state-city"
 import { uploadToImgBB } from "@/Share/ImageUpload"
+import useAxiosPublic from "@/Hook/useAxiosPublic"
 
 const Register = () => {
   const { createUser, updateUserProfile } = useAuth()
@@ -15,7 +15,7 @@ const Register = () => {
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
-
+  const axiosPublic = useAxiosPublic();
   // Location state for country-state-city
   const [country, setCountry] = useState(null)
   const [state, setState] = useState(null)
@@ -95,7 +95,7 @@ const Register = () => {
         district: state?.name || "",
         upazila: city?.name || "",
         photoURL: photoURL || "",
-        phone: "", // Add phone field if needed
+        role: "", // Add phone field if needed
         lastDonation: null,
         availability: "Available",
         status: "active",
@@ -103,12 +103,12 @@ const Register = () => {
       }
 
       // If you have a backend API, save user data
-      // try {
-      //   await axios.post('http://localhost:5000/api/users/register', userData)
-      //   console.log('User data saved to database')
-      // } catch (dbError) {
-      //   console.error('Database save error:', dbError)
-      // }
+      try {
+        await axiosPublic.post('http://localhost:5001/users', userData)
+        console.log('User data saved to database')
+      } catch (dbError) {
+        console.error('Database save error:', dbError)
+      }
 
       toast.success("Account created successfully!")
       reset()

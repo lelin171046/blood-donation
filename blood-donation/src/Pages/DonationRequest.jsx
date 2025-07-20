@@ -2,158 +2,43 @@
 
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-
 import { Card, CardContent } from "@/components/ui/card"
 import { MapPin, Calendar, Clock, User, Eye, AlertCircle } from "lucide-react"
 import useAuth from "@/Hook/useAuth"
 import { Button } from "@/components/ui/button"
-
+import useAxiosPublic from "@/Hook/useAxiosPublic"
 
 const DonationRequestsPage = () => {
   const [requests, setRequests] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState("all")
   const navigate = useNavigate()
-  const { user } = useAuth() // Get current user
-
-  // Mock donation requests data - replace with actual API call
-  const mockRequests = [
-    {
-      id: 1,
-      recipientName: "Sarah Ahmed",
-      bloodGroup: "A+",
-      location: "Dhaka Medical College Hospital, Dhaka",
-      district: "Dhaka",
-      upazila: "Dhanmondi",
-      date: "2024-07-25",
-      time: "10:00 AM",
-      urgency: "Critical",
-      contactPerson: "Dr. Rahman",
-      phone: "+880 1712-345678",
-      description: "Patient needs blood for emergency surgery. Multiple units required.",
-      status: "pending",
-      createdAt: "2024-07-20T08:00:00Z",
-      hospital: "Dhaka Medical College Hospital",
-      unitsNeeded: 3,
-    },
-    {
-      id: 2,
-      recipientName: "Mohammad Hasan",
-      bloodGroup: "O-",
-      location: "Chittagong Medical College, Chittagong",
-      district: "Chittagong",
-      upazila: "Agrabad",
-      date: "2024-07-24",
-      time: "2:00 PM",
-      urgency: "Urgent",
-      contactPerson: "Nurse Fatima",
-      phone: "+880 1812-345678",
-      description: "Emergency blood requirement for accident victim",
-      status: "pending",
-      createdAt: "2024-07-19T14:30:00Z",
-      hospital: "Chittagong Medical College",
-      unitsNeeded: 2,
-    },
-    {
-      id: 3,
-      recipientName: "Rashida Begum",
-      bloodGroup: "B+",
-      location: "Square Hospital, Dhaka",
-      district: "Dhaka",
-      upazila: "Panthapath",
-      date: "2024-07-26",
-      time: "9:00 AM",
-      urgency: "Moderate",
-      contactPerson: "Dr. Khan",
-      phone: "+880 1912-345678",
-      description: "Blood needed for childbirth complications",
-      status: "pending",
-      createdAt: "2024-07-21T10:15:00Z",
-      hospital: "Square Hospital",
-      unitsNeeded: 1,
-    },
-    {
-      id: 4,
-      recipientName: "Abdul Karim",
-      bloodGroup: "AB+",
-      location: "Rajshahi Medical College, Rajshahi",
-      district: "Rajshahi",
-      upazila: "Boalia",
-      date: "2024-07-23",
-      time: "11:30 AM",
-      urgency: "Critical",
-      contactPerson: "Dr. Sultana",
-      phone: "+880 1612-345678",
-      description: "Blood required for cancer treatment - ongoing therapy",
-      status: "pending",
-      createdAt: "2024-07-18T16:45:00Z",
-      hospital: "Rajshahi Medical College",
-      unitsNeeded: 4,
-    },
-    {
-      id: 5,
-      recipientName: "Nasir Ahmed",
-      bloodGroup: "O+",
-      location: "Holy Family Hospital, Dhaka",
-      district: "Dhaka",
-      upazila: "Eskaton",
-      date: "2024-07-24",
-      time: "3:30 PM",
-      urgency: "Urgent",
-      contactPerson: "Dr. Islam",
-      phone: "+880 1512-345678",
-      description: "Emergency blood transfusion needed for surgery",
-      status: "pending",
-      createdAt: "2024-07-20T12:20:00Z",
-      hospital: "Holy Family Hospital",
-      unitsNeeded: 2,
-    },
-    {
-      id: 6,
-      recipientName: "Fatima Khatun",
-      bloodGroup: "A-",
-      location: "Ibn Sina Hospital, Sylhet",
-      district: "Sylhet",
-      upazila: "Sadar",
-      date: "2024-07-27",
-      time: "8:00 AM",
-      urgency: "Critical",
-      contactPerson: "Dr. Ahmed",
-      phone: "+880 1712-987654",
-      description: "Urgent blood needed for maternal complications",
-      status: "pending",
-      createdAt: "2024-07-22T09:30:00Z",
-      hospital: "Ibn Sina Hospital",
-      unitsNeeded: 2,
-    },
-  ]
+  const { user } = useAuth()
+  const axiosPublic = useAxiosPublic()
 
   useEffect(() => {
-    // Simulate API call to fetch donation requests
     const fetchRequests = async () => {
       setIsLoading(true)
       try {
-        // Replace this with actual API call
-        // const response = await axios.get('/api/donation-requests?status=pending')
-        // setRequests(response.data.requests)
+        const response = await axiosPublic.get("/api/donation-requests")
+        console.log(response.data, "API Response")
 
-        // Simulate loading delay
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        setRequests(mockRequests.filter((req) => req.status === "pending"))
+        // Filter only pending requests
+        const pendingRequests = response.data.filter((req) => req.status === "pending")
+        setRequests(pendingRequests)
       } catch (error) {
         console.error("Failed to fetch donation requests:", error)
+        setRequests([])
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchRequests()
-  }, [])
+  }, [axiosPublic])
 
   const handleViewDetails = (requestId) => {
-    // Check if user is logged in
     if (!user) {
-      // Store the intended destination and redirect to login
       navigate("/login", {
         state: {
           from: `/donation-request/${requestId}`,
@@ -162,9 +47,21 @@ const DonationRequestsPage = () => {
       })
       return
     }
-
-    // User is logged in, navigate to details page
     navigate(`/donation-request/${requestId}`)
+  }
+
+  // Calculate urgency based on donation date
+  const calculateUrgency = (donationDate) => {
+    if (!donationDate) return "moderate"
+
+    const today = new Date()
+    const requestDate = new Date(donationDate)
+    const diffTime = requestDate - today
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    if (diffDays <= 1) return "critical"
+    if (diffDays <= 3) return "urgent"
+    return "moderate"
   }
 
   const getUrgencyColor = (urgency) => {
@@ -185,6 +82,7 @@ const DonationRequestsPage = () => {
   }
 
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A"
     const date = new Date(dateString)
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -193,20 +91,40 @@ const DonationRequestsPage = () => {
     })
   }
 
+  const formatTime = (timeString) => {
+    if (!timeString) return "N/A"
+
+    // Handle time format (HH:MM to 12-hour format)
+    const [hours, minutes] = timeString.split(":")
+    const hour = Number.parseInt(hours)
+    const ampm = hour >= 12 ? "PM" : "AM"
+    const displayHour = hour % 12 || 12
+    return `${displayHour}:${minutes} ${ampm}`
+  }
+
+  // Filter requests based on calculated urgency
   const filteredRequests = requests.filter((request) => {
     if (filter === "all") return true
-    return request.urgency.toLowerCase() === filter
+    const urgency = calculateUrgency(request.donationDate)
+    return urgency.toLowerCase() === filter
   })
 
+  // Sort requests by urgency and date
   const sortedRequests = filteredRequests.sort((a, b) => {
-    // Sort by urgency (Critical > Urgent > Moderate) then by date
     const urgencyOrder = { critical: 3, urgent: 2, moderate: 1 }
-    const urgencyDiff = urgencyOrder[b.urgency.toLowerCase()] - urgencyOrder[a.urgency.toLowerCase()]
+    const urgencyA = calculateUrgency(a.donationDate).toLowerCase()
+    const urgencyB = calculateUrgency(b.donationDate).toLowerCase()
 
+    const urgencyDiff = urgencyOrder[urgencyB] - urgencyOrder[urgencyA]
     if (urgencyDiff !== 0) return urgencyDiff
 
-    return new Date(a.date) - new Date(b.date)
+    return new Date(a.donationDate) - new Date(b.donationDate)
   })
+
+  // Calculate stats based on urgency
+  const criticalCount = requests.filter((r) => calculateUrgency(r.donationDate) === "critical").length
+  const urgentCount = requests.filter((r) => calculateUrgency(r.donationDate) === "urgent").length
+  const moderateCount = requests.filter((r) => calculateUrgency(r.donationDate) === "moderate").length
 
   if (isLoading) {
     return (
@@ -240,24 +158,20 @@ const DonationRequestsPage = () => {
           </Card>
           <Card className="bg-red-50 border-red-200">
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-red-700 mb-2">
-                {requests.filter((r) => r.urgency === "Critical").length}
-              </div>
+              <div className="text-3xl font-bold text-red-700 mb-2">{criticalCount}</div>
               <div className="text-red-700 text-sm">Critical Cases</div>
             </CardContent>
           </Card>
           <Card className="bg-orange-50 border-orange-200">
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-orange-700 mb-2">
-                {requests.filter((r) => r.urgency === "Urgent").length}
-              </div>
+              <div className="text-3xl font-bold text-orange-700 mb-2">{urgentCount}</div>
               <div className="text-orange-700 text-sm">Urgent Cases</div>
             </CardContent>
           </Card>
           <Card className="bg-green-50 border-green-200">
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-green-700 mb-2">24/7</div>
-              <div className="text-green-700 text-sm">Support Available</div>
+              <div className="text-3xl font-bold text-green-700 mb-2">{moderateCount}</div>
+              <div className="text-green-700 text-sm">Moderate Cases</div>
             </CardContent>
           </Card>
         </div>
@@ -282,7 +196,7 @@ const DonationRequestsPage = () => {
                 : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
             }`}
           >
-            Critical ({requests.filter((r) => r.urgency === "Critical").length})
+            Critical ({criticalCount})
           </button>
           <button
             onClick={() => setFilter("urgent")}
@@ -292,7 +206,7 @@ const DonationRequestsPage = () => {
                 : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
             }`}
           >
-            Urgent ({requests.filter((r) => r.urgency === "Urgent").length})
+            Urgent ({urgentCount})
           </button>
           <button
             onClick={() => setFilter("moderate")}
@@ -302,7 +216,7 @@ const DonationRequestsPage = () => {
                 : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
             }`}
           >
-            Moderate ({requests.filter((r) => r.urgency === "Moderate").length})
+            Moderate ({moderateCount})
           </button>
         </div>
 
@@ -323,101 +237,105 @@ const DonationRequestsPage = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-900">
-                {filter === "all" ? "All Requests" : `${filter.charAt(0).toUpperCase() + filter.slice(1)} Requests`}(
+                {filter === "all" ? "All Requests" : `${filter.charAt(0).toUpperCase() + filter.slice(1)} Requests`} (
                 {sortedRequests.length})
               </h2>
             </div>
 
             {/* Card View */}
             <div className="grid gap-6">
-              {sortedRequests.map((request) => (
-                <Card
-                  key={request.id}
-                  className={`hover:shadow-lg transition-all duration-200 border-l-4 ${
-                    request.urgency === "Critical"
-                      ? "border-l-red-500 bg-red-50/30"
-                      : request.urgency === "Urgent"
-                        ? "border-l-orange-500 bg-orange-50/30"
-                        : "border-l-yellow-500 bg-yellow-50/30"
-                  }`}
-                >
-                  <CardContent className="p-6">
-                    <div className="grid lg:grid-cols-5 gap-6 items-center">
-                      {/* Patient Info - 2 columns */}
-                      <div className="lg:col-span-2 space-y-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg text-gray-900 flex items-center gap-2 mb-2">
-                              <User size={20} />
-                              {request.recipientName}
-                            </h3>
-                            <div className="flex items-center gap-3 mb-3">
-                              <span
-                                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getBloodGroupColor(request.bloodGroup)}`}
-                              >
-                                {request.bloodGroup}
-                              </span>
-                              <span
-                                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getUrgencyColor(request.urgency)}`}
-                              >
-                                {request.urgency}
-                              </span>
-                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                {request.unitsNeeded} unit{request.unitsNeeded > 1 ? "s" : ""} needed
-                              </span>
+              {sortedRequests.map((request) => {
+                const urgency = calculateUrgency(request.donationDate)
+
+                return (
+                  <Card
+                    key={request._id}
+                    className={`hover:shadow-lg transition-all duration-200 border-l-4 ${
+                      urgency === "critical"
+                        ? "border-l-red-500 bg-red-50/30"
+                        : urgency === "urgent"
+                          ? "border-l-orange-500 bg-orange-50/30"
+                          : "border-l-yellow-500 bg-yellow-50/30"
+                    }`}
+                  >
+                    <CardContent className="p-6">
+                      <div className="grid lg:grid-cols-5 gap-6 items-center">
+                        {/* Patient Info - 2 columns */}
+                        <div className="lg:col-span-2 space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-lg text-gray-900 flex items-center gap-2 mb-2">
+                                <User size={20} />
+                                {request.recipientName}
+                              </h3>
+                              <div className="flex items-center gap-3 mb-3">
+                                <span
+                                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getBloodGroupColor(request.bloodGroup)}`}
+                                >
+                                  {request.bloodGroup}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getUrgencyColor(urgency)}`}
+                                >
+                                  {urgency.charAt(0).toUpperCase() + urgency.slice(1)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <MapPin size={16} />
+                            <span className="text-sm">
+                              {request.hospitalName}, {request.recipientDistrict}, {request.recipientUpazila}
+                            </span>
+                          </div>
+
+                          <p className="text-sm text-gray-600 line-clamp-2">{request.requestMessage}</p>
+                        </div>
+
+                        {/* Date & Time - 1 column */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Calendar size={16} />
+                            <div>
+                              <div className="text-sm font-medium">{formatDate(request.donationDate)}</div>
+                              <div className="text-xs text-gray-500">Needed by</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Clock size={16} />
+                            <div>
+                              <div className="text-sm font-medium">{formatTime(request.donationTime)}</div>
+                              <div className="text-xs text-gray-500">Time</div>
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <MapPin size={16} />
-                          <span className="text-sm">{request.location}</span>
-                        </div>
-
-                        <p className="text-sm text-gray-600 line-clamp-2">{request.description}</p>
-                      </div>
-
-                      {/* Date & Time - 1 column */}
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Calendar size={16} />
-                          <div>
-                            <div className="text-sm font-medium">{formatDate(request.date)}</div>
-                            <div className="text-xs text-gray-500">Needed by</div>
+                        {/* Contact Info - 1 column */}
+                        <div className="space-y-2">
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">{request.requesterName}</div>
+                            <div className="text-gray-500">{request.hospitalName}</div>
+                            <div className="text-xs text-gray-400">{request.requesterEmail}</div>
                           </div>
+                          <div className="text-xs text-gray-500">Posted: {formatDate(request.createdAt)}</div>
                         </div>
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <Clock size={16} />
-                          <div>
-                            <div className="text-sm font-medium">{request.time}</div>
-                            <div className="text-xs text-gray-500">Time</div>
-                          </div>
-                        </div>
-                      </div>
 
-                      {/* Contact Info - 1 column */}
-                      <div className="space-y-2">
-                        <div className="text-sm">
-                          <div className="font-medium text-gray-900">{request.contactPerson}</div>
-                          <div className="text-gray-500">{request.hospital}</div>
+                        {/* Action Button - 1 column */}
+                        <div className="flex justify-end">
+                          <Button
+                            onClick={() => handleViewDetails(request._id)}
+                            className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
+                          >
+                            <Eye size={16} />
+                            View Details
+                          </Button>
                         </div>
-                        <div className="text-xs text-gray-500">Posted: {formatDate(request.createdAt)}</div>
                       </div>
-
-                      {/* Action Button - 1 column */}
-                      <div className="flex justify-end">
-                        <Button
-                          onClick={() => handleViewDetails(request.id)}
-                          className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
-                        >
-                          <Eye size={16} />
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           </div>
         )}
@@ -432,7 +350,7 @@ const DonationRequestsPage = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
-                onClick={() => navigate("/submit-request")}
+                onClick={() => navigate("/dashboard/create-request")}
                 className="bg-red-600 hover:bg-red-700 text-white px-8 py-3"
               >
                 Submit Blood Request
