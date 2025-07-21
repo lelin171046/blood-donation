@@ -135,12 +135,23 @@ app.post("/api/donation-requests", async (req, res) => {
   
 })
 
- app.get('/api/donation-requests', async (req, res) => {
-      
-      const result = await donationRequestCollection.find().toArray();
-      res.send(result);
-    })
+
+app.get('/api/donation-requests', async (req, res) => {
      
+     const result = await donationRequestCollection.find().toArray();
+     res.send(result);
+   })
+
+app.get('/api/my-donation-requests/:email', async (req, res) => {
+    const email = req.params.email;
+        // if(email !== req.decoded.email){
+        //   return res.status(403).send({message: 'Unauthorized access'})
+
+        // }
+        const query = {requesterEmail: email}
+     const result = await donationRequestCollection.findOne(query)
+     res.send(result);
+   })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");

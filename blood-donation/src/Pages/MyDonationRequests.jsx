@@ -1,7 +1,7 @@
 "use client"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,8 +10,6 @@ import {
   ArrowLeft,
   Calendar,
   MapPin,
-  User,
-  Mail,
   Edit,
   Trash2,
   Eye,
@@ -19,15 +17,17 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react"
 import toast from "react-hot-toast"
+import useAxiosPublic from "@/Hook/useAxiosPublic"
 
 const MyDonationRequests = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [requests, setRequests] = useState([])
-  const [filteredRequests, setFilteredRequests] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+  const queryClient = useQueryClient()
+  const axiosPublic = useAxiosPublic()
+
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -50,153 +50,85 @@ const MyDonationRequests = () => {
     }
   }, [user, navigate])
 
-  // Mock donation requests data - replace with actual API call
-  const mockRequests = [
-    {
-      id: 1,
-      recipientName: "Sarah Ahmed",
-      recipientDistrict: "Dhaka",
-      recipientUpazila: "Dhanmondi",
-      donationDate: "2024-07-25",
-      donationTime: "10:00 AM",
-      status: "inprogress",
-      donorInfo: {
-        name: "Ahmed Rahman",
-        email: "ahmed.rahman@email.com",
-      },
-      createdAt: "2024-07-20T08:00:00Z",
-      bloodGroup: "A+",
-      urgency: "Critical",
-    },
-    {
-      id: 2,
-      recipientName: "Mohammad Hasan",
-      recipientDistrict: "Chittagong",
-      recipientUpazila: "Agrabad",
-      donationDate: "2024-07-24",
-      donationTime: "2:00 PM",
-      status: "pending",
-      donorInfo: null,
-      createdAt: "2024-07-19T14:30:00Z",
-      bloodGroup: "O-",
-      urgency: "Urgent",
-    },
-    {
-      id: 3,
-      recipientName: "Rashida Begum",
-      recipientDistrict: "Dhaka",
-      recipientUpazila: "Panthapath",
-      donationDate: "2024-07-26",
-      donationTime: "9:00 AM",
-      status: "done",
-      donorInfo: {
-        name: "Fatima Khatun",
-        email: "fatima.khatun@email.com",
-      },
-      createdAt: "2024-07-21T10:15:00Z",
-      bloodGroup: "B+",
-      urgency: "Moderate",
-    },
-    {
-      id: 4,
-      recipientName: "Abdul Karim",
-      recipientDistrict: "Rajshahi",
-      recipientUpazila: "Boalia",
-      donationDate: "2024-07-23",
-      donationTime: "11:30 AM",
-      status: "canceled",
-      donorInfo: null,
-      createdAt: "2024-07-18T16:45:00Z",
-      bloodGroup: "AB+",
-      urgency: "Critical",
-    },
-    {
-      id: 5,
-      recipientName: "Nasir Ahmed",
-      recipientDistrict: "Dhaka",
-      recipientUpazila: "Eskaton",
-      donationDate: "2024-07-24",
-      donationTime: "3:30 PM",
-      status: "pending",
-      donorInfo: null,
-      createdAt: "2024-07-20T12:20:00Z",
-      bloodGroup: "O+",
-      urgency: "Urgent",
-    },
-    {
-      id: 6,
-      recipientName: "Fatima Khatun",
-      recipientDistrict: "Sylhet",
-      recipientUpazila: "Sadar",
-      donationDate: "2024-07-27",
-      donationTime: "8:00 AM",
-      status: "inprogress",
-      donorInfo: {
-        name: "Ibrahim Hassan",
-        email: "ibrahim.hassan@email.com",
-      },
-      createdAt: "2024-07-22T09:30:00Z",
-      bloodGroup: "A-",
-      urgency: "Critical",
-    },
-    {
-      id: 7,
-      recipientName: "Kamal Uddin",
-      recipientDistrict: "Khulna",
-      recipientUpazila: "Khalishpur",
-      donationDate: "2024-07-28",
-      donationTime: "2:00 PM",
-      status: "done",
-      donorInfo: {
-        name: "Salma Khatun",
-        email: "salma.khatun@email.com",
-      },
-      createdAt: "2024-07-23T14:15:00Z",
-      bloodGroup: "B-",
-      urgency: "Moderate",
-    },
-    {
-      id: 8,
-      recipientName: "Rubina Akter",
-      recipientDistrict: "Barisal",
-      recipientUpazila: "Sadar",
-      donationDate: "2024-07-29",
-      donationTime: "10:30 AM",
-      status: "pending",
-      donorInfo: null,
-      createdAt: "2024-07-24T11:45:00Z",
-      bloodGroup: "O+",
-      urgency: "Urgent",
-    },
-  ]
+  // Fetch donation requests using TanStack Query
+  const {
+    data: requests = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ["my-donation-requests", user?.email],
+    queryFn: async () => {
+      if (!user?.email) throw new Error("User email not available")
 
-  useEffect(() => {
-    const fetchRequests = async () => {
-      setIsLoading(true)
-      try {
-        // Replace with actual API call
-        // const response = await axios.get(`/api/donation-requests/user/${user.uid}`)
-        // setRequests(response.data.requests)
+      const response = await axiosPublic.get(`/api/my-donation-requests/${user.email}`)
 
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        setRequests(mockRequests)
-        setFilteredRequests(mockRequests)
-      } catch (error) {
-        console.error("Failed to fetch requests:", error)
-        toast.error("Failed to load donation requests")
-      } finally {
-        setIsLoading(false)
-      }
-    }
+      // Ensure we always return an array
+      return Array.isArray(response.data) ? response.data : []
+    },
+    enabled: !!user?.email, // Only run query when user email is available
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    onError: (error) => {
+      console.error("Failed to fetch requests:", error)
+      toast.error("Failed to load donation requests")
+    },
+  })
 
-    if (user) {
-      fetchRequests()
-    }
-  }, [user])
+  // Update status mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ requestId, newStatus }) => {
+      const response = await axiosPublic.patch(`/api/donation-requests/${requestId}`, {
+        status: newStatus,
+      })
+      return response.data
+    },
+    onSuccess: (data, variables) => {
+      // Update the cache optimistically
+      queryClient.setQueryData(["my-donation-requests", user?.email], (oldData) => {
+        if (!Array.isArray(oldData)) return []
+        return oldData.map((request) =>
+          request._id === variables.requestId ? { ...request, status: variables.newStatus } : request,
+        )
+      })
+      toast.success(`Request marked as ${variables.newStatus}`)
+    },
+    onError: (error) => {
+      console.error("Failed to update status:", error)
+      toast.error("Failed to update request status")
+    },
+  })
 
-  // Filter and search functionality
-  useEffect(() => {
-    let filtered = requests
+  // Delete request mutation
+  const deleteRequestMutation = useMutation({
+    mutationFn: async (requestId) => {
+      const response = await axiosPublic.delete(`/api/donation-requests/${requestId}`)
+      return response.data
+    },
+    onSuccess: (data, requestId) => {
+      // Remove from cache
+      queryClient.setQueryData(["my-donation-requests", user?.email], (oldData) => {
+        if (!Array.isArray(oldData)) return []
+        return oldData.filter((request) => request._id !== requestId)
+      })
+
+      setShowDeleteModal(false)
+      setRequestToDelete(null)
+      toast.success("Donation request deleted successfully")
+    },
+    onError: (error) => {
+      console.error("Failed to delete request:", error)
+      toast.error("Failed to delete donation request")
+    },
+  })
+
+  // Filter and search functionality using useMemo for performance
+  const filteredRequests = useMemo(() => {
+    let filtered = Array.isArray(requests) ? requests : []
 
     // Status filter
     if (statusFilter !== "all") {
@@ -205,56 +137,45 @@ const MyDonationRequests = () => {
 
     // Search filter
     if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
         (request) =>
-          request.recipientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          request.recipientDistrict.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          request.recipientUpazila.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          request.bloodGroup.toLowerCase().includes(searchQuery.toLowerCase()),
+          request.recipientName?.toLowerCase().includes(query) ||
+          request.recipientDistrict?.toLowerCase().includes(query) ||
+          request.recipientUpazila?.toLowerCase().includes(query) ||
+          request.bloodGroup?.toLowerCase().includes(query) ||
+          request.hospitalName?.toLowerCase().includes(query),
       )
     }
 
-    setFilteredRequests(filtered)
-    setCurrentPage(1) // Reset to first page when filtering
-  }, [searchQuery, statusFilter, requests])
+    return filtered
+  }, [requests, statusFilter, searchQuery])
+
+  // Reset to first page when filtering
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, statusFilter])
 
   // Pagination logic
-  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage)
+  const totalPages = Math.ceil((filteredRequests?.length || 0) / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
   const currentRequests = filteredRequests.slice(startIndex, endIndex)
 
-  const handleStatusChange = async (requestId, newStatus) => {
-    try {
-      // Replace with actual API call
-      // await axios.patch(`/api/donation-requests/${requestId}`, { status: newStatus })
-
-      setRequests((prev) =>
-        prev.map((request) => (request.id === requestId ? { ...request, status: newStatus } : request)),
-      )
-
-      toast.success(`Request marked as ${newStatus}`)
-    } catch (error) {
-      console.error("Failed to update status:", error)
-      toast.error("Failed to update request status")
-    }
+  // Handler functions
+  const handleStatusChange = (requestId, newStatus) => {
+    updateStatusMutation.mutate({ requestId, newStatus })
   }
 
-  const handleDelete = async (requestId) => {
-    try {
-      // Replace with actual API call
-      // await axios.delete(`/api/donation-requests/${requestId}`)
-
-      setRequests((prev) => prev.filter((request) => request.id !== requestId))
-      setShowDeleteModal(false)
-      setRequestToDelete(null)
-      toast.success("Donation request deleted successfully")
-    } catch (error) {
-      console.error("Failed to delete request:", error)
-      toast.error("Failed to delete donation request")
-    }
+  const handleDelete = (requestId) => {
+    deleteRequestMutation.mutate(requestId)
   }
 
+  const handleRefresh = () => {
+    refetch()
+  }
+
+  // Utility functions
   const getStatusColor = (status) => {
     switch (status) {
       case "pending":
@@ -278,8 +199,56 @@ const MyDonationRequests = () => {
     })
   }
 
+  const formatTime = (timeString) => {
+    if (!timeString) return ""
+    // Convert 24-hour format to 12-hour format
+    const [hours, minutes] = timeString.split(":")
+    const hour12 = hours % 12 || 12
+    const ampm = hours >= 12 ? "PM" : "AM"
+    return `${hour12}:${minutes} ${ampm}`
+  }
+
+  // Calculate urgency based on donation date
+  const calculateUrgency = (donationDate) => {
+    const today = new Date()
+    const donation = new Date(donationDate)
+    const diffTime = donation - today
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    if (diffDays <= 1) return "Critical"
+    if (diffDays <= 3) return "Urgent"
+    return "Moderate"
+  }
+
+  // Early returns
   if (!user) {
     return null
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="text-red-500 mb-4">
+              <Calendar className="mx-auto h-12 w-12" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to Load Requests</h2>
+            <p className="text-gray-600 mb-4">
+              {error?.message || "Something went wrong while loading your donation requests."}
+            </p>
+            <div className="flex gap-3">
+              <Button onClick={() => navigate("/dashboard")} variant="outline">
+                Back to Dashboard
+              </Button>
+              <Button onClick={handleRefresh} className="bg-red-600 hover:bg-red-700">
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   if (isLoading) {
@@ -298,7 +267,7 @@ const MyDonationRequests = () => {
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center justify-between mb-4">
             <Button
               variant="outline"
               onClick={() => navigate("/dashboard")}
@@ -306,6 +275,15 @@ const MyDonationRequests = () => {
             >
               <ArrowLeft size={16} />
               Back to Dashboard
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleRefresh}
+              disabled={isFetching}
+              className="flex items-center gap-2 bg-transparent"
+            >
+              <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} />
+              Refresh
             </Button>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">My Donation Requests</h1>
@@ -369,7 +347,6 @@ const MyDonationRequests = () => {
                   className="pl-10"
                 />
               </div>
-
               {/* Status Filter */}
               <div className="flex items-center gap-3">
                 <Filter size={16} className="text-gray-500" />
@@ -386,7 +363,6 @@ const MyDonationRequests = () => {
                 </select>
               </div>
             </div>
-
             <div className="mt-4 text-sm text-gray-600">
               Showing {startIndex + 1}-{Math.min(endIndex, filteredRequests.length)} of {filteredRequests.length}{" "}
               requests
@@ -400,122 +376,150 @@ const MyDonationRequests = () => {
             <CardTitle className="flex items-center gap-2">
               <Calendar size={20} />
               Donation Requests
+              {isFetching && <RefreshCw size={16} className="animate-spin text-gray-400" />}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Recipient</th>
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Location</th>
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Date & Time</th>
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Status</th>
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Donor Info</th>
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {currentRequests.map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-50">
-                      <td className="py-4 px-6">
-                        <div>
-                          <div className="font-medium text-gray-900">{request.recipientName}</div>
-                          <div className="text-sm text-gray-500">{request.bloodGroup}</div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                          <MapPin size={14} />
-                          {request.recipientUpazila}, {request.recipientDistrict}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="text-sm">
-                          <div className="font-medium">{formatDate(request.donationDate)}</div>
-                          <div className="text-gray-500">{request.donationTime}</div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="space-y-2">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(request.status)}`}
-                          >
-                            {request.status}
-                          </span>
-                          {request.status === "inprogress" && (
-                            <div className="flex gap-1">
-                              <Button
-                                size="sm"
-                                onClick={() => handleStatusChange(request.id, "done")}
-                                className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 h-6"
-                              >
-                                Done
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleStatusChange(request.id, "canceled")}
-                                className="text-red-600 border-red-300 hover:bg-red-50 text-xs px-2 py-1 h-6 bg-transparent"
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        {request.status === "inprogress" && request.donorInfo ? (
-                          <div className="text-sm">
-                            <div className="font-medium flex items-center gap-1">
-                              <User size={12} />
-                              {request.donorInfo.name}
-                            </div>
-                            <div className="text-gray-500 flex items-center gap-1">
-                              <Mail size={12} />
-                              {request.donorInfo.email}
+            {currentRequests.length === 0 ? (
+              <div className="text-center py-12">
+                <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No donation requests found</h3>
+                <p className="text-gray-500 mb-4">
+                  {searchQuery || statusFilter !== "all"
+                    ? "Try adjusting your search or filter criteria."
+                    : "You haven't created any donation requests yet."}
+                </p>
+                <Button onClick={() => navigate("/dashboard/create-request")} className="bg-red-600 hover:bg-red-700">
+                  Create Your First Request
+                </Button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Recipient</th>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Location</th>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Date & Time</th>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Status</th>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Hospital</th>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {currentRequests.map((request) => (
+                      <tr key={request._id} className="hover:bg-gray-50">
+                        <td className="py-4 px-6">
+                          <div>
+                            <div className="font-medium text-gray-900">{request.recipientName}</div>
+                            <div className="text-sm text-gray-500">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-600 text-white">
+                                {request.bloodGroup}
+                              </span>
                             </div>
                           </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">No donor assigned</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => navigate(`/dashboard/edit-request/${request.id}`)}
-                            className="bg-transparent"
-                          >
-                            <Edit size={14} />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setRequestToDelete(request)
-                              setShowDeleteModal(true)
-                            }}
-                            className="text-red-600 border-red-300 hover:bg-red-50 bg-transparent"
-                          >
-                            <Trash2 size={14} />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => navigate(`/dashboard/request-details/${request.id}`)}
-                            className="bg-transparent"
-                          >
-                            <Eye size={14} />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-1 text-sm text-gray-600">
+                            <MapPin size={14} />
+                            {request.recipientUpazila}, {request.recipientDistrict}
+                          </div>
+                          <div className="text-xs text-gray-500">{request.recipientDivision} Division</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm">
+                            <div className="font-medium">{formatDate(request.donationDate)}</div>
+                            <div className="text-gray-500">{formatTime(request.donationTime)}</div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="space-y-2">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(request.status)}`}
+                            >
+                              {request.status}
+                            </span>
+                            <div className="text-xs text-gray-500">{calculateUrgency(request.donationDate)}</div>
+                            {request.status === "pending" && (
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleStatusChange(request._id, "inprogress")}
+                                  disabled={updateStatusMutation.isLoading}
+                                  className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 h-6"
+                                >
+                                  {updateStatusMutation.isLoading ? "..." : "Mark In Progress"}
+                                </Button>
+                              </div>
+                            )}
+                            {request.status === "inprogress" && (
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleStatusChange(request._id, "done")}
+                                  disabled={updateStatusMutation.isLoading}
+                                  className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 h-6"
+                                >
+                                  {updateStatusMutation.isLoading ? "..." : "Done"}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleStatusChange(request._id, "canceled")}
+                                  disabled={updateStatusMutation.isLoading}
+                                  className="text-red-600 border-red-300 hover:bg-red-50 text-xs px-2 py-1 h-6 bg-transparent"
+                                >
+                                  {updateStatusMutation.isLoading ? "..." : "Cancel"}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm">
+                            <div className="font-medium">{request.hospitalName}</div>
+                            <div className="text-gray-500 text-xs line-clamp-1">{request.fullAddress}</div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => navigate(`/dashboard/edit-request/${request._id}`)}
+                              className="bg-transparent"
+                              disabled={request.status === "done" || request.status === "canceled"}
+                            >
+                              <Edit size={14} />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setRequestToDelete(request)
+                                setShowDeleteModal(true)
+                              }}
+                              className="text-red-600 border-red-300 hover:bg-red-50 bg-transparent"
+                              disabled={request.status === "inprogress" || deleteRequestMutation.isLoading}
+                            >
+                              <Trash2 size={14} />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => navigate(`/dashboard/request-details/${request._id}`)}
+                              className="bg-transparent"
+                            >
+                              <Eye size={14} />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -533,7 +537,6 @@ const MyDonationRequests = () => {
                     <ChevronLeft size={16} />
                     Previous
                   </Button>
-
                   {/* Page numbers */}
                   <div className="flex gap-1">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -547,7 +550,6 @@ const MyDonationRequests = () => {
                       } else {
                         pageNum = currentPage - 2 + i
                       }
-
                       return (
                         <Button
                           key={pageNum}
@@ -561,7 +563,6 @@ const MyDonationRequests = () => {
                       )
                     })}
                   </div>
-
                   <Button
                     variant="outline"
                     size="sm"
@@ -600,14 +601,23 @@ const MyDonationRequests = () => {
                       setRequestToDelete(null)
                     }}
                     className="flex-1 bg-transparent"
+                    disabled={deleteRequestMutation.isLoading}
                   >
                     Cancel
                   </Button>
                   <Button
-                    onClick={() => handleDelete(requestToDelete.id)}
+                    onClick={() => handleDelete(requestToDelete._id)}
                     className="flex-1 bg-red-600 hover:bg-red-700"
+                    disabled={deleteRequestMutation.isLoading}
                   >
-                    Delete
+                    {deleteRequestMutation.isLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Deleting...
+                      </>
+                    ) : (
+                      "Delete"
+                    )}
                   </Button>
                 </div>
               </CardContent>

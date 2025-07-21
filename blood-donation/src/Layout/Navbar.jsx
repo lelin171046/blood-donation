@@ -81,7 +81,7 @@ export const Navbar = () => {
                      Donor Dashboard
                     </Link>
                     <Link
-                    to="/my-donation-requests"
+                    to="/dashboard/my-donation-requests"
                     className="flex items-center px-3 py-2 text-gray-700 hover:text-red-600"
                     onClick={() => setIsOpen(false)}
                   >
@@ -163,7 +163,7 @@ export const Navbar = () => {
                      Donor Dashboard
                     </Link>
                   <Link
-                    to="/my-donation-requests"
+                    to="/dashboard/my-donation-requests"
                     className="flex items-center px-3 py-2 text-gray-700 hover:text-red-600"
                     onClick={() => setIsOpen(false)}
                   >
