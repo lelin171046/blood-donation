@@ -7,6 +7,7 @@ import { Helmet } from "react-helmet"
 import useAuth from "@/Hook/useAuth"
 import toast from "react-hot-toast"
 import { Eye, EyeOff } from "lucide-react"
+import useAxiosPublic from "@/Hook/useAxiosPublic"
 
 const Login = () => {
   const { signIn, signInWithGoogle, signInWithGithub } = useAuth()
@@ -14,6 +15,7 @@ const Login = () => {
   const location = useLocation()
   const [showPassword, setShowPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
+  const axiosPublic = useAxiosPublic()
 
   // Get the redirect path from location state (for protected routes)
   const from = location.state?.from || "/"
@@ -89,7 +91,21 @@ const Login = () => {
     try {
       setErrorMsg("")
       const result = await signInWithGoogle()
-      console.log("Google sign in successful:", result.user)
+       const userInfo = {
+        email: result.user?.email,
+        name: result.user?.displayname,
+         role: "", 
+        lastDonation: null,
+        availability: "Available",
+        status: "active",
+        createdAt: new Date().toISOString(),
+        
+      }
+      axiosPublic.post('/users', userInfo)
+      .then(res=>{
+        console.log(res.data)
+      })
+
       toast.success("Google sign in successful!")
       navigate(from, { replace: true })
     } catch (error) {

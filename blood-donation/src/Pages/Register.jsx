@@ -95,7 +95,7 @@ const Register = () => {
         district: state?.name || "",
         upazila: city?.name || "",
         photoURL: photoURL || "",
-        role: "", // Add phone field if needed
+        role: "", 
         lastDonation: null,
         availability: "Available",
         status: "active",
@@ -104,7 +104,7 @@ const Register = () => {
 
       // If you have a backend API, save user data
       try {
-        await axiosPublic.post('http://localhost:5001/users', userData)
+        await axiosPublic.post('/users', userData)
         console.log('User data saved to database')
       } catch (dbError) {
         console.error('Database save error:', dbError)

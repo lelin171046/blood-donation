@@ -29,65 +29,65 @@ const router = createBrowserRouter([
         path: '/',
         element: <Home></Home>
       },
-    {
-      path: 'about',
-      element: <About></About>
+      {
+        path: 'about',
+        element: <About></About>
 
-    },
-    {
-      path: 'register',
-      element: <Register></Register>
-    },
-  {
-    path: 'login',
-    element: <Login></Login>
-  },
-  {
-    path:'dashboard',
-    element: <DashboardPage></DashboardPage>
-  },
-  {
-    path: 'donation-requests',
-    element: <DonationRequestsPage></DonationRequestsPage>
-  },{
-    path: 'donation-request/:requestId',
-    element: <DonationRequestDetailsPage></DonationRequestDetailsPage>
-  },
-  {
-    path: 'blog',
-    element: <Blog></Blog>
-  },
-  {
-    path: 'funding',
-    element: <Funding></Funding>
-  },
-  {
-    path: 'search',
-    element: <SearchPage></SearchPage>
-  },
-  {
-    path: 'donor-dashboard',
-    element: <DonorDashboard></DonorDashboard>
-  },
-  {
-    path: 'create-request',
-    element: <CreateRequest></CreateRequest>
-  }
+      },
+      {
+        path: 'register',
+        element: <Register></Register>
+      },
+      {
+        path: 'login',
+        element: <Login></Login>
+      },
+      // {
+      //   path: 'dashboard',
+      //   element: <DashboardPage></DashboardPage>
+      // },
+      {
+        path: 'donation-requests',
+        element: <DonationRequestsPage></DonationRequestsPage>
+      }, {
+        path: 'donation-request/:requestId',
+        element: <DonationRequestDetailsPage></DonationRequestDetailsPage>
+      },
+      {
+        path: 'blog',
+        element: <Blog></Blog>
+      },
+      {
+        path: 'funding',
+        element: <Funding></Funding>
+      },
+      {
+        path: 'search',
+        element: <SearchPage></SearchPage>
+      },
+      {
+        path: 'donor-dashboard',
+        element: <DonorDashboard></DonorDashboard>
+      },
+      {
+        path: 'create-request',
+        element: <CreateRequest></CreateRequest>
+      }
 
     ]
   },
   {
     path: 'dashboard',
     element: <PrivateRoute><DashboardPage></DashboardPage></PrivateRoute>,
-    children:[
+    children: [
       {
         path: 'all-users',
         element: <AllUsersPage></AllUsersPage>
       },
-  {
-    path: '/my-donation-requests',
-    element: <MyDonationRequests></MyDonationRequests>
-  }
+      {
+        path: 'my-donation-requests',
+        element: <MyDonationRequests></MyDonationRequests>
+      }
     ]
   }
 ]);

@@ -80,14 +80,14 @@ export const Navbar = () => {
                       <LayoutDashboard className="h-4 w-4 mr-2" />
                      Donor Dashboard
                     </Link>
-                    <Link
-                    to="/dashboard/my-donation-requests"
+                    {/* <Link
+                    to="/my-donation-requests"
                     className="flex items-center px-3 py-2 text-gray-700 hover:text-red-600"
                     onClick={() => setIsOpen(false)}
                   >
                     <GitPullRequestDraftIcon className="h-4 w-4 mr-2" />
                     My Donation Requests
-                  </Link>
+                  </Link> */}
                     <button
                       onClick={handleLogout}
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

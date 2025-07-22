@@ -4,7 +4,7 @@ const cors = require("cors")
 const multer = require("multer")
 const axios = require("axios")
 const app = express();
-
+const jwt = require('jsonwebtoken');
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
@@ -91,6 +91,7 @@ async function run() {
     //Admin api
       app.get('/users/admin/:email', verifyToken,  async(req, res)=>{
         const email = req.params.email;
+        console.log(email, 'back Email');
         if(email !== req.decoded.email){
           return res.status(403).send({message: 'Unauthorized access'})
 
@@ -106,12 +107,6 @@ async function run() {
     
 
       //user Api....................
-      //all users
-      app.get('/users', verifyToken, verifyAdmin, async (req, res)=>{
-        
-        const result = await usersCollection.find().toArray();
-        res.send(result)
-      })
       app.post('/users',  async(req, res)=>{
         const user = req.body;
         //checking user 
@@ -126,6 +121,14 @@ async function run() {
         res.send(result);
 
       })
+
+      //all users
+      app.get('/users', verifyToken, verifyAdmin, async (req, res)=>{
+        
+        const result = await usersCollection.find().toArray();
+        res.send(result)
+      })
+      
 // Create donation request (for regular users - no admin required)
 app.post("/api/donation-requests", async (req, res) => {
  
