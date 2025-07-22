@@ -6,7 +6,7 @@ const axios = require("axios")
 const app = express();
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const port = process.env.PORT || 5001;
 const corsOption = {
@@ -141,7 +141,7 @@ app.get('/api/donation-requests', async (req, res) => {
      const result = await donationRequestCollection.find().toArray();
      res.send(result);
    })
-
+//Find donation req by email
 app.get('/api/my-donation-requests/:email', async (req, res) => {
     const email = req.params.email;
         // if(email !== req.decoded.email){
@@ -149,9 +149,18 @@ app.get('/api/my-donation-requests/:email', async (req, res) => {
 
         // }
         const query = {requesterEmail: email}
-     const result = await donationRequestCollection.findOne(query)
+     const result = await donationRequestCollection.find(query).toArray()
      res.send(result);
    })
+
+   // delete donation requests by id
+
+    app.delete('/api/my-donation-requests/:id',  async (req, res)=>{
+        const id = req.params.id;
+        const query = {_id : new ObjectId(id)}
+        const result = await donationRequestCollection.deleteOne(query);
+        res.send(result)
+      })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");

@@ -63,7 +63,7 @@ const CreateRequest = () => {
     mutationFn: createDonationRequest,
     onSuccess: () => {
       toast.success("Donation request created successfully!")
-      navigate("/my-donation-requests")
+      navigate("/dashboard/my-donation-requests")
     },
     onError: (error) => {
       console.error("Mutation error:", error)

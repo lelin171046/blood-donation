@@ -15,6 +15,8 @@ import SearchPage from '@/Pages/SearchPage';
 import MyDonationRequests from '@/Pages/MyDonationRequests';
 import DonorDashboard from '@/Dashboard/DonorDashboard';
 import CreateRequest from '@/Pages/CreateRequest';
+import PrivateRoute from './PrivateRoute';
+import AllUsersPage from '@/Dashboard/AllUsersPage';
 
 
 const router = createBrowserRouter([
@@ -64,10 +66,6 @@ const router = createBrowserRouter([
     element: <SearchPage></SearchPage>
   },
   {
-    path: 'dashboard/my-donation-requests',
-    element: <MyDonationRequests></MyDonationRequests>
-  },
-  {
     path: 'donor-dashboard',
     element: <DonorDashboard></DonorDashboard>
   },
@@ -78,6 +76,20 @@ const router = createBrowserRouter([
 
     ]
   },
+  {
+    path: 'dashboard',
+    element: <PrivateRoute><DashboardPage></DashboardPage></PrivateRoute>,
+    children:[
+      {
+        path: 'all-users',
+        element: <AllUsersPage></AllUsersPage>
+      },
+  {
+    path: '/my-donation-requests',
+    element: <MyDonationRequests></MyDonationRequests>
+  }
+    ]
+  }
 ]);
 
 export default router;

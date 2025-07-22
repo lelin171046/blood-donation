@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import toast from "react-hot-toast"
 import useAxiosPublic from "@/Hook/useAxiosPublic"
+import Swal from "sweetalert2"
 
 const MyDonationRequests = () => {
   const { user } = useAuth()
@@ -64,9 +65,9 @@ const MyDonationRequests = () => {
       if (!user?.email) throw new Error("User email not available")
 
       const response = await axiosPublic.get(`/api/my-donation-requests/${user.email}`)
-
+      console.log(response.data.length, 'okk');
       // Ensure we always return an array
-      return Array.isArray(response.data) ? response.data : []
+      return response.data
     },
     enabled: !!user?.email, // Only run query when user email is available
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
@@ -104,28 +105,33 @@ const MyDonationRequests = () => {
   })
 
   // Delete request mutation
-  const deleteRequestMutation = useMutation({
-    mutationFn: async (requestId) => {
-      const response = await axiosPublic.delete(`/api/donation-requests/${requestId}`)
-      return response.data
-    },
-    onSuccess: (data, requestId) => {
-      // Remove from cache
-      queryClient.setQueryData(["my-donation-requests", user?.email], (oldData) => {
-        if (!Array.isArray(oldData)) return []
-        return oldData.filter((request) => request._id !== requestId)
-      })
+const handleDelete = request => {
+   Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!"
+    }).then((result) => {
+      if (result.isConfirmed) {
+console.log(request._id);
 
-      setShowDeleteModal(false)
-      setRequestToDelete(null)
-      toast.success("Donation request deleted successfully")
-    },
-    onError: (error) => {
-      console.error("Failed to delete request:", error)
-      toast.error("Failed to delete donation request")
-    },
-  })
-
+        axiosPublic.delete(`/api/my-donation-requests/${request._id}`)
+          .then(res => {
+            if (res.data.deletedCount > 0) {
+              Swal.fire({
+                title: "Deleted!",
+                text: "Your file has been deleted.",
+                icon: "success"
+              });
+              refetch()
+            }
+          })
+      }
+    });
+}
   // Filter and search functionality using useMemo for performance
   const filteredRequests = useMemo(() => {
     let filtered = Array.isArray(requests) ? requests : []
@@ -167,9 +173,9 @@ const MyDonationRequests = () => {
     updateStatusMutation.mutate({ requestId, newStatus })
   }
 
-  const handleDelete = (requestId) => {
-    deleteRequestMutation.mutate(requestId)
-  }
+  // const handleDelete = (requestId) => {
+  //   deleteRequestMutation.mutate(requestId)
+  // }
 
   const handleRefresh = () => {
     refetch()
@@ -495,12 +501,9 @@ const MyDonationRequests = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => {
-                                setRequestToDelete(request)
-                                setShowDeleteModal(true)
-                              }}
+                              onClick={() => handleDelete(request)}
                               className="text-red-600 border-red-300 hover:bg-red-50 bg-transparent"
-                              disabled={request.status === "inprogress" || deleteRequestMutation.isLoading}
+                              disabled={request.status === "inprogress"}
                             >
                               <Trash2 size={14} />
                             </Button>
