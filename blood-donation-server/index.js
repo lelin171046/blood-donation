@@ -217,6 +217,21 @@ app.get('/api/donation-requests', async (req, res) => {
      const result = await donationRequestCollection.findOne(query);
      res.send(result);
    })
+//update request status
+   app.patch('/api/donation-requests/:id', async (req, res) => {
+  const id = req.params.id;
+   const filter = {_id : new ObjectId(id)};
+        const updatedDoc = {
+          $set:{
+            status : 'In progress'
+          }
+        }
+const result = await donationRequestCollection.updateOne(filter, updatedDoc);
+res.send(result)
+
+
+});
+
 
 //Find donation req by email
 app.get('/api/my-donation-requests/:email', async (req, res) => {

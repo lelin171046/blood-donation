@@ -548,7 +548,7 @@ const AllBloodDonationRequestPage = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => navigate(`/dashboard/request-details/${request._id}`)}
+                              onClick={() => navigate(`/donation-request/${request._id}`)}
                               className="bg-transparent"
                             >
                               <Eye size={14} />
