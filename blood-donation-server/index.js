@@ -139,6 +139,70 @@ app.post("/api/donation-requests", async (req, res) => {
 })
 
 
+//  GET all donation requests (admin only)
+app.get("/api/donation-requests/all", verifyToken, async (req, res) => {
+  if (req.user.role !== "admin") return res.status(403).json({ message: "Forbidden" });
+
+  try {
+    const requests = await donationRequestCollection.find().sort({ createdAt: -1 }).toArray();
+    res.send(requests);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch donation requests" });
+  }
+});
+
+// Block User Endpoint
+app.patch('/users/status/:email', async (req, res) => {
+  const email = req.params.email;
+  const { status } = req.body; // expects { status: "blocked" } or { status: "active" }
+
+  try {
+    const result = await usersCollection.updateOne(
+      { email: email },
+      { $set: { status: status } }
+    );
+
+    if (result.modifiedCount > 0) {
+      res.send({ success: true, message: `User status updated to ${status}` });
+    } else {
+      res.status(404).send({ success: false, message: 'User not found or already set' });
+    }
+  } catch (error) {
+    res.status(500).send({ success: false, error: error.message });
+  }
+});
+
+   //Role Making api
+     app.patch('/users/admin/:id', verifyToken, verifyAdmin, async (req, res)=>{
+      const id = req.params.id;
+        const filter = {_id : new ObjectId(id)};
+        const updatedDoc = {
+          $set:{
+            role : 'admin'
+          }
+        }
+        const result = await usersCollection.updateOne(filter, updatedDoc);
+         res.send(result)
+     })
+// Assign volunteer role to a user
+app.patch('/users/volunteer/:id', verifyToken, verifyAdmin, async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: new ObjectId(id) };
+  const updateDoc = {
+    $set: {
+      role: 'volunteer'
+    }
+  };
+
+  try {
+    const result = await usersCollection.updateOne(filter, updateDoc);
+    res.send(result);
+  } catch (error) {
+    console.error("Error assigning volunteer role:", error);
+    res.status(500).send({ error: "Failed to assign volunteer role" });
+  }
+});
+
 app.get('/api/donation-requests', async (req, res) => {
      
      const result = await donationRequestCollection.find().toArray();

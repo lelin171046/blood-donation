@@ -20,11 +20,13 @@ import {
 } from "lucide-react"
 import toast from "react-hot-toast"
 import useAxiosPublic from "@/Hook/useAxiosPublic"
+import useAxiosSecure from "@/Hook/useAxiosSecure"
 
 const AllUsersPage = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
   const axiosPublic = useAxiosPublic()
+  const axiosSecure = useAxiosSecure()
 
   const [users, setUsers] = useState([])
   const [filteredUsers, setFilteredUsers] = useState([])
@@ -36,79 +38,16 @@ const AllUsersPage = () => {
   const itemsPerPage = 10
 
   // Check if user is admin
-  useEffect(() => {
-    if (!user) {
-      navigate("/login", {
-        state: {
-          from: "/dashboard/all-users",
-          message: "Please log in to access admin panel",
-        },
-      })
-      return
-    }
-  }, [user, navigate])
-
-  // Fetch users data
-  useEffect(() => {
+   useEffect(() => {
     const fetchUsers = async () => {
       setIsLoading(true)
       try {
-        const response = await axiosPublic.get("/api/users")
-        setUsers(response.data.users || [])
-        setFilteredUsers(response.data.users || [])
+        const response = await axiosSecure.get("/users")
+        setUsers(response.data)
+        setFilteredUsers(response.data)
       } catch (error) {
         console.error("Failed to fetch users:", error)
         toast.error("Failed to load users data")
-        // Mock data for development
-        const mockUsers = [
-          {
-            _id: "1",
-            name: "Ahmed Rahman",
-            email: "ahmed.rahman@email.com",
-            role: "donor",
-            status: "active",
-            avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
-            createdAt: "2024-01-15T10:30:00Z",
-          },
-          {
-            _id: "2",
-            name: "Fatima Khatun",
-            email: "fatima.khatun@email.com",
-            role: "volunteer",
-            status: "active",
-            avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150",
-            createdAt: "2024-02-20T14:15:00Z",
-          },
-          {
-            _id: "3",
-            name: "Mohammad Hasan",
-            email: "mohammad.hasan@email.com",
-            role: "donor",
-            status: "blocked",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-            createdAt: "2024-03-10T09:45:00Z",
-          },
-          {
-            _id: "4",
-            name: "Rashida Begum",
-            email: "rashida.begum@email.com",
-            role: "admin",
-            status: "active",
-            avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150",
-            createdAt: "2024-01-25T16:20:00Z",
-          },
-          {
-            _id: "5",
-            name: "Abdul Karim",
-            email: "abdul.karim@email.com",
-            role: "donor",
-            status: "active",
-            avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
-            createdAt: "2024-04-05T11:30:00Z",
-          },
-        ]
-        setUsers(mockUsers)
-        setFilteredUsers(mockUsers)
       } finally {
         setIsLoading(false)
       }
@@ -117,42 +56,37 @@ const AllUsersPage = () => {
     fetchUsers()
   }, [])
 
-  // Filter and search functionality
   useEffect(() => {
     let filtered = users
 
-    // Status filter
     if (statusFilter !== "all") {
       filtered = filtered.filter((user) => user.status === statusFilter)
     }
 
-    // Search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(
         (user) =>
           user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          user.role?.toLowerCase().includes(searchQuery.toLowerCase()),
+          user.role?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     }
 
     setFilteredUsers(filtered)
-    setCurrentPage(1) // Reset to first page when filtering
+    setCurrentPage(1)
   }, [searchQuery, statusFilter, users])
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
   const currentUsers = filteredUsers.slice(startIndex, endIndex)
 
-  // User management functions
-  const handleBlockUser = async (userId) => {
+  const handleBlockUser = async (email) => {
     try {
-      await axiosPublic.patch(`/api/users/${userId}/block`)
-
-      setUsers((prev) => prev.map((user) => (user._id === userId ? { ...user, status: "blocked" } : user)))
-
+      await axiosSecure.patch(`/users/status/${email}`, { status: "blocked" })
+      setUsers((prev) =>
+        prev.map((user) => (user.email === email ? { ...user, status: "blocked" } : user))
+      )
       toast.success("User blocked successfully")
       setActiveDropdown(null)
     } catch (error) {
@@ -161,12 +95,12 @@ const AllUsersPage = () => {
     }
   }
 
-  const handleUnblockUser = async (userId) => {
+  const handleUnblockUser = async (email) => {
     try {
-      await axiosPublic.patch(`/api/users/${userId}/unblock`)
-
-      setUsers((prev) => prev.map((user) => (user._id === userId ? { ...user, status: "active" } : user)))
-
+      await axiosSecure.patch(`/users/status/${email}`, { status: "active" })
+      setUsers((prev) =>
+        prev.map((user) => (user.email === email ? { ...user, status: "active" } : user))
+      )
       toast.success("User unblocked successfully")
       setActiveDropdown(null)
     } catch (error) {
@@ -175,12 +109,12 @@ const AllUsersPage = () => {
     }
   }
 
-  const handleMakeVolunteer = async (userId) => {
+  const handleMakeVolunteer = async (id) => {
     try {
-      await axiosPublic.patch(`/api/users/${userId}/role`, { role: "volunteer" })
-
-      setUsers((prev) => prev.map((user) => (user._id === userId ? { ...user, role: "volunteer" } : user)))
-
+      await axiosSecure.patch(`/users/volunteer/${id}`, { role: "volunteer" })
+      setUsers((prev) =>
+        prev.map((user) => (user._id === id ? { ...user, role: "volunteer" } : user))
+      )
       toast.success("User promoted to volunteer")
       setActiveDropdown(null)
     } catch (error) {
@@ -189,61 +123,18 @@ const AllUsersPage = () => {
     }
   }
 
-  const handleMakeAdmin = async (userId) => {
+  const handleMakeAdmin = async (id) => {
     try {
-      await axiosPublic.patch(`/api/users/${userId}/role`, { role: "admin" })
-
-      setUsers((prev) => prev.map((user) => (user._id === userId ? { ...user, role: "admin" } : user)))
-
+      await axiosSecure.patch(`/users/admin/${id}`, { role: "admin" })
+      setUsers((prev) =>
+        prev.map((user) => (user._id === id ? { ...user, role: "admin" } : user))
+      )
       toast.success("User promoted to admin")
       setActiveDropdown(null)
     } catch (error) {
       console.error("Failed to make admin:", error)
       toast.error("Failed to make admin")
     }
-  }
-
-  const getRoleBadgeColor = (role) => {
-    switch (role) {
-      case "admin":
-        return "bg-purple-100 text-purple-800 border-purple-200"
-      case "volunteer":
-        return "bg-blue-100 text-blue-800 border-blue-200"
-      case "donor":
-        return "bg-green-100 text-green-800 border-green-200"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
-    }
-  }
-
-  const getStatusBadgeColor = (status) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800 border-green-200"
-      case "blocked":
-        return "bg-red-100 text-red-800 border-red-200"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
-    }
-  }
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
-  }
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => setActiveDropdown(null)
-    document.addEventListener("click", handleClickOutside)
-    return () => document.removeEventListener("click", handleClickOutside)
-  }, [])
-
-  if (!user) {
-    return null
   }
 
   if (isLoading) {
@@ -373,7 +264,7 @@ const AllUsersPage = () => {
                         <div className="flex items-center gap-3">
                           <img
                             src={
-                              userData.avatar ||
+                              userData.photoURL ||
                               `https://ui-avatars.com/api/?name=${userData.name || "User"}&background=ef4444&color=fff`
                             }
                             alt={userData.name}
@@ -389,20 +280,20 @@ const AllUsersPage = () => {
                       </td>
                       <td className="py-4 px-6">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRoleBadgeColor(userData.role)}`}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${(userData.role)}`}
                         >
                           {userData.role}
                         </span>
                       </td>
                       <td className="py-4 px-6">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadgeColor(userData.status)}`}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${(userData.status)}`}
                         >
                           {userData.status}
                         </span>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="text-sm text-gray-600">{formatDate(userData.createdAt)}</div>
+                        <div className="text-sm text-gray-600">{(userData.createdAt)}</div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="relative">
@@ -411,19 +302,19 @@ const AllUsersPage = () => {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation()
-                              setActiveDropdown(activeDropdown === userData._id ? null : userData._id)
+                              setActiveDropdown(activeDropdown === userData.email ? null : userData.email)
                             }}
                             className="bg-transparent"
                           >
                             <MoreVertical size={16} />
                           </Button>
 
-                          {activeDropdown === userData._id && (
+                          {activeDropdown === userData?.email && (
                             <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-48">
                               <div className="py-1">
                                 {userData.status === "active" ? (
                                   <button
-                                    onClick={() => handleBlockUser(userData._id)}
+                                    onClick={() => handleBlockUser(userData.email)}
                                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                                   >
                                     <Ban size={14} />
@@ -431,7 +322,7 @@ const AllUsersPage = () => {
                                   </button>
                                 ) : (
                                   <button
-                                    onClick={() => handleUnblockUser(userData._id)}
+                                    onClick={() => handleUnblockUser(userData.email)}
                                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-green-600 hover:bg-green-50"
                                   >
                                     <CheckCircle size={14} />
@@ -439,7 +330,7 @@ const AllUsersPage = () => {
                                   </button>
                                 )}
 
-                                {userData.role === "donor" && (
+                               
                                   <button
                                     onClick={() => handleMakeVolunteer(userData._id)}
                                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-blue-600 hover:bg-blue-50"
@@ -447,9 +338,9 @@ const AllUsersPage = () => {
                                     <UserCheck size={14} />
                                     Make Volunteer
                                   </button>
-                                )}
+                               
 
-                                {(userData.role === "donor" || userData.role === "volunteer") && (
+                                {(userData.role === "" || userData.role === "volunteer") && (
                                   <button
                                     onClick={() => handleMakeAdmin(userData._id)}
                                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-purple-600 hover:bg-purple-50"
