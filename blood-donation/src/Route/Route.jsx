@@ -7,17 +7,17 @@ import About from '../Component/About';
 import Register from '@/Pages/Register';
 import Login from '@/Pages/Login';
 import DashboardPage from '@/Dashboard/DashboardPage';
-import DonationRequestsPage from '@/Pages/DonationRequest';
 import DonationRequestDetailsPage from '@/Pages/DonationRequestDetails';
 import Blog from '@/Pages/Blog';
 import Funding from '@/Pages/Funding';
 import SearchPage from '@/Pages/SearchPage';
-import MyDonationRequests from '@/Pages/MyDonationRequests';
+import MyDonationRequests from '@/Dashboard/MyDonationRequests';
 import DonorDashboard from '@/Dashboard/DonorDashboard';
 import CreateRequest from '@/Pages/CreateRequest';
 import PrivateRoute from './PrivateRoute';
 import AllUsersPage from '@/Dashboard/AllUsersPage';
 import AllBloodDonationRequestPage from '@/Dashboard/AllBloodDonationRequestPage';
+import DonationRequests from '@/Pages/DonationRequest';
 
 
 const router = createBrowserRouter([
@@ -49,10 +49,12 @@ const router = createBrowserRouter([
       // },
       {
         path: 'donation-requests',
-        element: <DonationRequestsPage></DonationRequestsPage>
+        element: <DonationRequests></DonationRequests>
       }, {
-        path: 'donation-request/:requestId',
-        element: <DonationRequestDetailsPage></DonationRequestDetailsPage>
+        path: 'donation-request/:id',
+        element: <DonationRequestDetailsPage></DonationRequestDetailsPage>,
+        
+
       },
       {
         path: 'blog',
@@ -69,10 +71,6 @@ const router = createBrowserRouter([
       {
         path: 'donor-dashboard',
         element: <DonorDashboard></DonorDashboard>
-      },
-      {
-        path: 'create-request',
-        element: <CreateRequest></CreateRequest>
       }
 
     ]
@@ -92,6 +90,10 @@ const router = createBrowserRouter([
       {
         path: 'all-blood-donation-request',
         element: <AllBloodDonationRequestPage></AllBloodDonationRequestPage>
+      },
+      {
+        path: 'create-request',
+        element: <CreateRequest></CreateRequest>
       }
     ]
   }

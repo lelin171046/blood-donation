@@ -1,14 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Card, CardContent } from "@/components/ui/card"
 import { MapPin, Calendar, Clock, User, Eye, AlertCircle } from "lucide-react"
 import useAuth from "@/Hook/useAuth"
 import { Button } from "@/components/ui/button"
 import useAxiosPublic from "@/Hook/useAxiosPublic"
 
-const DonationRequestsPage = () => {
+const DonationRequests = () => {
   const [requests, setRequests] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState("all")
@@ -37,19 +37,18 @@ const DonationRequestsPage = () => {
     fetchRequests()
   }, [axiosPublic])
 
-  const handleViewDetails = (requestId) => {
-    if (!user) {
-      navigate("/login", {
-        state: {
-          from: `/donation-request/${requestId}`,
-          message: "Please log in to view donation request details",
-        },
-      })
-      return
-    }
-    navigate(`/donation-request/${requestId}`)
-  }
-
+// const handleViewDetails = (id) => {
+//   if (!user) {
+//     navigate("/login", {
+//       state: {
+//         from: `/donation-request/${id}`,
+//         message: "Please log in to view donation request details",
+//       },
+//     })
+//     return
+//   }
+//   navigate(`/donation-request/${id}`)
+// }
   // Calculate urgency based on donation date
   const calculateUrgency = (donationDate) => {
     if (!donationDate) return "moderate"
@@ -323,12 +322,15 @@ const DonationRequestsPage = () => {
 
                         {/* Action Button - 1 column */}
                         <div className="flex justify-end">
-                          <Button
-                            onClick={() => handleViewDetails(request._id)}
+                         
+                          <Button>
+                            <Link to={`/donation-request/${request._id}`}
+                          //  onClick={() => handleViewDetails(request._id)}
                             className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
                           >
                             <Eye size={16} />
                             View Details
+                          </Link>
                           </Button>
                         </div>
                       </div>
@@ -379,4 +381,4 @@ const DonationRequestsPage = () => {
   )
 }
 
-export default DonationRequestsPage
+export default DonationRequests

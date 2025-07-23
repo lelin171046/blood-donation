@@ -91,7 +91,6 @@ async function run() {
     //Admin api
       app.get('/users/admin/:email', verifyToken,  async(req, res)=>{
         const email = req.params.email;
-        console.log(email, 'back Email');
         if(email !== req.decoded.email){
           return res.status(403).send({message: 'Unauthorized access'})
 
@@ -140,11 +139,12 @@ app.post("/api/donation-requests", async (req, res) => {
 
 
 //  GET all donation requests (admin only)
-app.get("/api/donation-requests/all", verifyToken, async (req, res) => {
-  if (req.user.role !== "admin") return res.status(403).json({ message: "Forbidden" });
+app.get("/api/donation-requests/all", verifyToken, verifyAdmin, async (req, res) => {
+
+
 
   try {
-    const requests = await donationRequestCollection.find().sort({ createdAt: -1 }).toArray();
+    const requests = await donationRequestCollection.find().toArray();
     res.send(requests);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch donation requests" });
@@ -208,6 +208,16 @@ app.get('/api/donation-requests', async (req, res) => {
      const result = await donationRequestCollection.find().toArray();
      res.send(result);
    })
+   
+
+//view details
+   app.get('/api/donation-requests/:id', async (req, res) => {
+      const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+     const result = await donationRequestCollection.findOne(query);
+     res.send(result);
+   })
+
 //Find donation req by email
 app.get('/api/my-donation-requests/:email', async (req, res) => {
     const email = req.params.email;

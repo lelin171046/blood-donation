@@ -11,13 +11,14 @@ import {
   Package,
   Magnet,
   Users,
-  Menu,
+  Menu as MenuIcon,
   ShoppingCart,
   DollarSign,
   Calendar,
   LogOut,
   LayoutDashboard,
   Loader2,
+  X,
 } from "lucide-react"
 
 const DashboardPage = () => {
@@ -25,9 +26,9 @@ const DashboardPage = () => {
   const navigate = useNavigate()
   const [isAdmin] = useAdmin()
   const [isLoading, setIsLoading] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    // Simulate loading data
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 1500)
@@ -42,117 +43,126 @@ const DashboardPage = () => {
     navigate("/")
   }
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen)
+  }
+
   return (
-    <div className="h-full flex p-3 space-y-2 w-60 dark:text-gray-800">
-      {loading ? (
-        <div className="w-full flex flex-col items-center justify-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-red-600" />
-          <p className="text-sm font-medium">Loading dashboard...</p>
+    <div className="min-h-screen flex flex-col md:flex-row">
+      {/* Mobile Topbar */}
+      <div className="md:hidden flex items-center justify-between bg-orange-400 p-4">
+        <div className="flex items-center space-x-2">
+          <img src={user?.photoURL} alt="" className="w-8 h-8 rounded-full" />
+          <span className="text-white font-medium">{user?.displayName}</span>
         </div>
-      ) : (
-        <div className="divide-y min-h-full dark:divide-gray-300 bg-orange-400">
-          <div className="flex items-center p-2 space-x-4">
-            <img
-              src={user.photoURL}
-                    alt=""
-              className="w-12 h-12 rounded-full dark:bg-gray-500"
-            />
-            <div>
-              <h2 className="text-lg font-semibold">{user?.displayName}</h2>
-              <span className="flex items-center space-x-1">
-                <a rel="noopener noreferrer" href="#" className="text-xs hover:underline dark:text-gray-600">
+        <button onClick={toggleSidebar}>
+          {sidebarOpen ? <X className="text-white" /> : <MenuIcon className="text-white" />}
+        </button>
+      </div>
+
+      {/* Sidebar */}
+      <div
+        className={`${
+          sidebarOpen ? "block" : "hidden"
+        } md:block w-full md:w-60 bg-orange-400 dark:text-gray-800 p-4 space-y-4 md:min-h-screen transition-all duration-300`}
+      >
+        {loading || isLoading ? (
+          <div className="w-full flex flex-col items-center justify-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-red-600" />
+            <p className="text-sm font-medium">Loading dashboard...</p>
+          </div>
+        ) : (
+          <>
+            {/* Profile */}
+            <div className="flex items-center space-x-4">
+              <img src={user?.photoURL} alt="" className="w-12 h-12 rounded-full" />
+              <div>
+                <h2 className="text-lg font-semibold">{user?.displayName}</h2>
+                <a href="#" className="text-xs hover:underline dark:text-gray-600">
                   View profile
                 </a>
-              </span>
+              </div>
             </div>
-          </div>
 
-          <ul className="pt-2 pb-4 space-y-1 text-sm">
-            {isAdmin ? (
-              <>
-                <li className="dark:bg-gray-100 dark:text-gray-900">
-                  <a rel="noopener noreferrer" href="#" className="flex items-center p-2 space-x-3 rounded-md">
-                    <LayoutDashboard className="w-5 h-5 text-gray-600" />
-                    <span>Dashboard</span>
-                  </a>
-                </li>
-                <li>
-                  <NavLink to={"/dashboard/admin-home"} className="flex items-center p-2 space-x-3 rounded-md">
-                    <Home className="w-5 h-5 text-gray-600" />
-                    <span>Admin Home</span>
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to={"/dashboard/addItem"} className="flex items-center p-2 space-x-3 rounded-md">
-                    <AudioWaveform className="w-5 h-5 text-gray-600" />
-                    <span>Add Item</span>
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to={"/dashboard/manageItem"} className="flex items-center p-2 space-x-3 rounded-md">
-                    <Package className="w-5 h-5 text-gray-600" />
-                    <span>Manage Item</span>
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to={"/dashboard/all-blood-donation-request"} className="flex items-center p-2 space-x-3 rounded-md">
-                    <Magnet className="w-5 h-5 text-gray-600" />
-                    <span>All Donation Request</span>
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to={"/dashboard/all-users"} className="flex items-center p-2 space-x-3 rounded-md">
-                    <Users className="w-5 h-5 text-gray-600" />
-                    <span>All Users</span>
-                  </NavLink>
-                </li>
-              </>
-            ) : (
-              <></>
-            )}
-          </ul>
-
-          <ul className="pt-4 pb-2 space-y-1 text-sm">
-            <NavLink to={"/dashboard/user-home"} className="flex items-center p-2 space-x-3 rounded-md">
-              <Home className="w-5 h-5 text-gray-600" />
-              <span>User Home</span>
-            </NavLink>
-            <ol>
+            {/* Nav Items */}
+            <ul className="pt-2 space-y-1 text-sm">
+              {isAdmin && (
+                <>
+                  <li>
+                    <NavLink to="/dashboard/admin-home" className="flex items-center p-2 space-x-3 rounded-md">
+                      <Home className="w-5 h-5 text-gray-600" />
+                      <span>Admin Home</span>
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/dashboard/addItem" className="flex items-center p-2 space-x-3 rounded-md">
+                      <AudioWaveform className="w-5 h-5 text-gray-600" />
+                      <span>Add Item</span>
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/dashboard/manageItem" className="flex items-center p-2 space-x-3 rounded-md">
+                      <Package className="w-5 h-5 text-gray-600" />
+                      <span>Manage Item</span>
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/dashboard/all-blood-donation-request" className="flex items-center p-2 space-x-3 rounded-md">
+                      <Magnet className="w-5 h-5 text-gray-600" />
+                      <span>All Donation Request</span>
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/dashboard/all-users" className="flex items-center p-2 space-x-3 rounded-md">
+                      <Users className="w-5 h-5 text-gray-600" />
+                      <span>All Users</span>
+                    </NavLink>
+                  </li>
+                </>
+              )}
               <li>
-                <NavLink to={"/order/salad"} className="flex items-center p-2 space-x-3 rounded-md">
-                  <Menu className="w-5 h-5 text-gray-600" />
+                <NavLink to="/dashboard/user-home" className="flex items-center p-2 space-x-3 rounded-md">
+                  <Home className="w-5 h-5 text-gray-600" />
+                  <span>User Home</span>
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/order/salad" className="flex items-center p-2 space-x-3 rounded-md">
+                  <MenuIcon className="w-5 h-5 text-gray-600" />
                   <span>Menu</span>
                 </NavLink>
               </li>
               <li>
-                <NavLink to={"/dashboard/cart"} className="flex items-center p-2 space-x-3 rounded-md">
+                <NavLink to="/dashboard/my-donation-requests" className="flex items-center p-2 space-x-3 rounded-md">
                   <ShoppingCart className="w-5 h-5 text-gray-600" />
-                  <span>My Cart</span>
+                  <span>My Requests</span>
                 </NavLink>
               </li>
               <li>
-                <NavLink to={"/dashboard/payment-history"} className="flex items-center p-2 space-x-3 rounded-md">
+                <NavLink to="/dashboard/payment-history" className="flex items-center p-2 space-x-3 rounded-md">
                   <DollarSign className="w-5 h-5 text-gray-600" />
                   <span>Payment History</span>
                 </NavLink>
               </li>
               <li>
-                <NavLink to={"/dashboard/reservation"} className="flex items-center p-2 space-x-3 rounded-md">
+                <NavLink to="/dashboard/create-request" className="flex items-center p-2 space-x-3 rounded-md">
                   <Calendar className="w-5 h-5 text-gray-600" />
-                  <span>Reservation</span>
+                  <span>Create Request</span>
                 </NavLink>
               </li>
-              <button onClick={handleLogOut}>
-                <a rel="noopener noreferrer" href="#" className="flex items-center p-2 space-x-3 rounded-md">
+              <li>
+                <button onClick={handleLogOut} className="flex items-center w-full p-2 space-x-3 rounded-md">
                   <LogOut className="w-5 h-5 text-gray-600" />
                   <span>Logout</span>
-                </a>
-              </button>
-            </ol>
-          </ul>
-        </div>
-      )}
-      <div className="flex-1">
+                </button>
+              </li>
+            </ul>
+          </>
+        )}
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 p-4">
         <Outlet />
       </div>
     </div>

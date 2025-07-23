@@ -25,6 +25,7 @@ import {
 import toast from "react-hot-toast"
 import useAxiosPublic from "@/Hook/useAxiosPublic"
 import useAxiosSecure from "@/Hook/useAxiosSecure"
+import Swal from "sweetalert2"
 
 const AllBloodDonationRequestPage = () => {
   const { user } = useAuth()
@@ -77,7 +78,7 @@ const AllBloodDonationRequestPage = () => {
     queryFn: async () => {
       const response = await axiosSecure.get("/api/donation-requests/all")
       // Ensure we always return an array
-      return Array.isArray(response.data.requests) ? response.data.requests : []
+      return response.data
     },
     enabled: !!user && !!isAdmin, // Only run query when user is admin
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
@@ -93,7 +94,7 @@ const AllBloodDonationRequestPage = () => {
   // Update status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ requestId, newStatus }) => {
-      const response = await axiosPublic.patch(`/api/donation-requests/${requestId}/admin`, {
+      const response = await axiosSecure.patch(`/api/donation-requests/${requestId}`, {
         status: newStatus,
       })
       return response.data
@@ -114,28 +115,34 @@ const AllBloodDonationRequestPage = () => {
     },
   })
 
-  // Delete request mutation
-  const deleteRequestMutation = useMutation({
-    mutationFn: async (requestId) => {
-      const response = await axiosPublic.delete(`/api/donation-requests/${requestId}/admin`)
-      return response.data
-    },
-    onSuccess: (data, requestId) => {
-      // Remove from cache
-      queryClient.setQueryData(["all-donation-requests"], (oldData) => {
-        if (!Array.isArray(oldData)) return []
-        return oldData.filter((request) => request._id !== requestId)
-      })
-
-      setShowDeleteModal(false)
-      setRequestToDelete(null)
-      toast.success("Donation request deleted successfully")
-    },
-    onError: (error) => {
-      console.error("Failed to delete request:", error)
-      toast.error("Failed to delete donation request")
-    },
-  })
+    // Delete request mutation
+  const handleDelete = request => {
+     Swal.fire({
+        title: "Are you sure?",
+        text: "You won't be able to revert this!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, delete it!"
+      }).then((result) => {
+        if (result.isConfirmed) {
+  console.log(request._id);
+  
+          axiosSecure.delete(`/api/my-donation-requests/${request._id}`)
+            .then(res => {
+              if (res.data.deletedCount > 0) {
+                Swal.fire({
+                  title: "Deleted!",
+                  text: "Your file has been deleted.",
+                  icon: "success"
+                });
+                refetch()
+              }
+            })
+        }
+      });
+  }
 
   // Filter and search functionality using useMemo for performance
   const filteredRequests = useMemo(() => {
@@ -180,9 +187,7 @@ const AllBloodDonationRequestPage = () => {
     updateStatusMutation.mutate({ requestId, newStatus })
   }
 
-  const handleDelete = (requestId) => {
-    deleteRequestMutation.mutate(requestId)
-  }
+
 
   const handleRefresh = () => {
     refetch()
@@ -294,11 +299,11 @@ const AllBloodDonationRequestPage = () => {
           <div className="flex items-center justify-between mb-4">
             <Button
               variant="outline"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/")}
               className="flex items-center gap-2 bg-transparent"
             >
               <ArrowLeft size={16} />
-              Back to Dashboard
+              Back to Home
             </Button>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-purple-600">
@@ -534,12 +539,9 @@ const AllBloodDonationRequestPage = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => {
-                                setRequestToDelete(request)
-                                setShowDeleteModal(true)
-                              }}
+                              onClick={() => handleDelete(request)}
                               className="text-red-600 border-red-300 hover:bg-red-50 bg-transparent"
-                              disabled={request.status === "inprogress" || deleteRequestMutation.isLoading}
+                              disabled={request.status === "inprogress"}
                             >
                               <Trash2 size={14} />
                             </Button>

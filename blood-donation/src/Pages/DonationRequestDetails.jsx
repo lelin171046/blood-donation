@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import useAuth from "@/Hook/useAuth"
 import toast from "react-hot-toast"
+import useAxiosPublic from "@/Hook/useAxiosPublic"
 // import Card from "@/components/ui/Card"
 
 const DonationRequestDetailsPage = () => {
@@ -29,7 +30,8 @@ const DonationRequestDetailsPage = () => {
   const [request, setRequest] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isResponding, setIsResponding] = useState(false)
-
+  const axiosPublic = useAxiosPublic()
+  console.log(id);
   // Mock data - replace with actual API call
   const mockRequests = {
     1: {
@@ -66,33 +68,27 @@ const DonationRequestDetailsPage = () => {
 
   useEffect(() => {
     // Check if user is logged in
-    if (!user) {
-      navigate("/login", {
-        state: {
-          from: `/donation-request/${id}`,
-          message: "Please log in to view donation request details",
-        },
-      })
-      return
-    }
+    // if (!user) {
+    //   navigate("/login", {
+    //     state: {
+    //       from: `/donation-request/${id}`,
+    //       message: "Please log in to view donation request details",
+    //     },
+    //   })
+    //   return
+    // }
 
     // Fetch request details
     const fetchRequestDetails = async () => {
       setIsLoading(true)
       try {
         // Replace with actual API call
-        // const response = await axios.get(`/api/donation-requests/${id}`)
-        // setRequest(response.data.request)
+        const response = await axiosPublic.get(`/api/donation-requests/${id}`)
+        setRequest(response.data)
+        console.log(response.data);
 
         // Simulate loading delay
-        await new Promise((resolve) => setTimeout(resolve, 800))
 
-        const requestData = mockRequests[id]
-        if (requestData) {
-          setRequest(requestData)
-        } else {
-          throw new Error("Request not found")
-        }
       } catch (error) {
         console.error("Failed to fetch request details:", error)
         toast.error("Failed to load request details")
@@ -114,10 +110,10 @@ const DonationRequestDetailsPage = () => {
     setIsResponding(true)
     try {
       // Replace with actual API call
-      // await axios.post(`/api/donation-requests/${id}/respond`, {
-      //   donorId: user.uid,
-      //   message: "I would like to donate blood for this request"
-      // })
+      await axiosPublic.post(`/api/donation-requests/${id}`, {
+        donorId: user.uid,
+        message: "I would like to donate blood for this request"
+      })
 
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -135,7 +131,8 @@ const DonationRequestDetailsPage = () => {
     if (navigator.share) {
       navigator.share({
         title: `Blood Donation Request - ${request.recipientName}`,
-        text: `Urgent: ${request.bloodGroup} blood needed for ${request.recipientName} at ${request.hospital}`,
+        text: `Urgent: ${request.bloodGroup} blood needed for ${request.recipientName} at ${request.
+          hospitalName}`,
         url: window.location.href,
       })
     } else {
@@ -257,26 +254,23 @@ const DonationRequestDetailsPage = () => {
                     <label className="text-sm font-medium text-gray-500">Patient Name</label>
                     <p className="text-gray-900 font-medium">{request.recipientName}</p>
                   </div>
-                  <div>
+                  {/* <div>
                     <label className="text-sm font-medium text-gray-500">Age</label>
                     <p className="text-gray-900">{request.patientAge} years</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Gender</label>
                     <p className="text-gray-900">{request.patientGender}</p>
-                  </div>
+                  </div> */}
                   <div>
                     <label className="text-sm font-medium text-gray-500">Blood Group</label>
                     <p className="text-gray-900 font-medium">{request.bloodGroup}</p>
                   </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Medical Condition</label>
-                  <p className="text-gray-900">{request.medicalCondition}</p>
-                </div>
+
                 <div>
                   <label className="text-sm font-medium text-gray-500">Description</label>
-                  <p className="text-gray-700">{request.description}</p>
+                  <p className="text-gray-700">{request.requestMessage}</p>
                 </div>
                 {request.additionalNotes && (
                   <div>
@@ -298,19 +292,21 @@ const DonationRequestDetailsPage = () => {
               <CardContent className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Hospital Name</label>
-                  <p className="text-gray-900 font-medium">{request.hospital}</p>
+                  <p className="text-gray-900 font-medium">{request.hospitalName}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Address</label>
                   <p className="text-gray-700 flex items-start gap-2">
                     <MapPin size={16} className="mt-1 text-gray-400" />
-                    {request.hospitalAddress}
+                    {request.fullAddress}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Location</label>
                   <p className="text-gray-700">
-                    {request.upazila}, {request.district}
+                    {request.
+                      recipientUpazila}, {request.
+                        recipientDistrict}
                   </p>
                 </div>
                 {request.donationInstructions && (
@@ -359,21 +355,23 @@ const DonationRequestDetailsPage = () => {
                 <div className="flex items-center gap-3">
                   <Calendar className="text-red-600" size={20} />
                   <div>
-                    <p className="font-medium">{formatDate(request.date)}</p>
+                    <p className="font-medium">{formatDate(request.
+                      donationDate)}</p>
                     <p className="text-sm text-gray-500">Needed by</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Clock className="text-red-600" size={20} />
                   <div>
-                    <p className="font-medium">{request.time}</p>
+                    <p className="font-medium">{request.
+                      donationTime}</p>
                     <p className="text-sm text-gray-500">Time</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <MapPin className="text-red-600" size={20} />
                   <div>
-                    <p className="font-medium">{request.hospital}</p>
+                    <p className="font-medium">{request.hospitalName}</p>
                     <p className="text-sm text-gray-500">{request.location}</p>
                   </div>
                 </div>
@@ -419,7 +417,7 @@ const DonationRequestDetailsPage = () => {
             </Card>
 
             {/* Progress */}
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Collection Progress</CardTitle>
               </CardHeader>
@@ -443,7 +441,7 @@ const DonationRequestDetailsPage = () => {
                   </p>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </div>
