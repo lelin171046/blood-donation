@@ -488,7 +488,7 @@ const AllBloodDonationRequestPage = () => {
                               <div className="flex gap-1">
                                 <Button
                                   size="sm"
-                                  onClick={() => handleStatusChange(request._id, "inprogress")}
+                                  onClick={() => handleStatusChange(request._id, "in progress")}
                                   disabled={updateStatusMutation.isLoading}
                                   className="bg-blue-600 hover:bg-blue-700 text-xs px-2 py-1 h-6"
                                 >

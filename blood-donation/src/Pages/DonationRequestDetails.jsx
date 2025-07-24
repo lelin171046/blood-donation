@@ -110,7 +110,7 @@ const DonationRequestDetailsPage = () => {
     setIsResponding(true)
     try {
       // Replace with actual API call
-      await axiosPublic.post(`/api/donation-requests/${id}`, {
+      await axiosPublic.patch(`/api/donation-requests/${id}`, {
         donorId: user.uid,
         message: "I would like to donate blood for this request"
       })
@@ -254,11 +254,11 @@ const DonationRequestDetailsPage = () => {
                     <label className="text-sm font-medium text-gray-500">Patient Name</label>
                     <p className="text-gray-900 font-medium">{request.recipientName}</p>
                   </div>
-                  {/* <div>
-                    <label className="text-sm font-medium text-gray-500">Age</label>
-                    <p className="text-gray-900">{request.patientAge} years</p>
-                  </div>
                   <div>
+                    <label className="text-sm font-medium text-gray-500">Status</label>
+                    <p className="text-gray-900">{request.status}</p>
+                  </div>
+                  {/* <div>
                     <label className="text-sm font-medium text-gray-500">Gender</label>
                     <p className="text-gray-900">{request.patientGender}</p>
                   </div> */}
