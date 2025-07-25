@@ -133,7 +133,7 @@ async function run() {
     });
 
     // Get All Donation Requests (Admin only)
-    app.get("/api/donation-requests/all", verifyToken, verifyAdmin, async (req, res) => {
+    app.get("/api/donation-requests/all", async (req, res) => {
       const result = await donationRequestCollection.find().toArray();
       res.send(result);
     });

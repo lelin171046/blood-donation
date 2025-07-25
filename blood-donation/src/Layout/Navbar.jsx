@@ -38,8 +38,13 @@ export const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
+            <Link to={'/'}                 className="text-gray-700 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+>
+            Home
+            </Link>
             {navLinks.map((link) => (
               <Link
+              
                 key={link.to}
                 to={link.to}
                 className="text-gray-700 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"

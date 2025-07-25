@@ -20,7 +20,7 @@ const DonationRequests = () => {
     const fetchRequests = async () => {
       setIsLoading(true)
       try {
-        const response = await axiosPublic.get("/api/donation-requests")
+        const response = await axiosPublic.get("/api/donation-requests/all")
         console.log(response.data, "API Response")
 
         // Filter only pending requests
