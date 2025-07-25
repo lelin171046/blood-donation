@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import axios from 'axios';
 
 const axiosSecure = axios.create({
-  baseURL: 'http://localhost:5001', // adjust if needed
+  // baseURL: 'http://localhost:5001', // adjust if needed
+  baseURL: 'https://blood-donation-server-steel.vercel.app', // adjust if needed
 });
 
 // Add interceptor to attach token
