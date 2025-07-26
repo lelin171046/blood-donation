@@ -7,6 +7,7 @@ import { MapPin, Calendar, Clock, User, Eye, AlertCircle } from "lucide-react"
 import useAuth from "@/Hook/useAuth"
 import { Button } from "@/components/ui/button"
 import useAxiosPublic from "@/Hook/useAxiosPublic"
+import useAxiosSecure from "@/Hook/useAxiosSecure"
 
 const DonationRequests = () => {
   const [requests, setRequests] = useState([])
@@ -14,7 +15,7 @@ const DonationRequests = () => {
   const [filter, setFilter] = useState("all")
   const navigate = useNavigate()
   const { user } = useAuth()
-  const axiosPublic = useAxiosPublic()
+  const axiosPublic = useAxiosSecure()
 
   useEffect(() => {
     const fetchRequests = async () => {

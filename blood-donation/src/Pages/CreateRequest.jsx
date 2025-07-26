@@ -6,6 +6,7 @@ import { useMutation } from "@tanstack/react-query"
 import useAxiosPublic from "@/Hook/useAxiosPublic"
 import useAuth from "@/Hook/useAuth"
 import { toast } from "react-hot-toast"
+import useAxiosSecure from "@/Hook/useAxiosSecure"
 
 const initialFormData = {
   recipientName: "",
@@ -26,7 +27,7 @@ const CreateRequest = () => {
   const [formData, setFormData] = useState(initialFormData)
 
   const { user, userStatus } = useAuth()
-  const axiosPublic = useAxiosPublic()
+  const axiosPublic = useAxiosSecure()
   const navigate = useNavigate()
 
   const handleChange = (e) => {

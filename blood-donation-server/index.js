@@ -128,12 +128,13 @@ async function run() {
     // Create Donation Request
     app.post("/api/donation-requests", verifyToken, async (req, res) => {
       const request = req.body;
+      console.log(request, 'frm clnt');
       const result = await donationRequestCollection.insertOne(request);
       res.send(result);
     });
 
     // Get All Donation Requests (Admin only)
-    app.get("/api/donation-requests/all", async (req, res) => {
+    app.get("/api/donation-requests/all", verifyToken, async (req, res) => {
       const result = await donationRequestCollection.find().toArray();
       res.send(result);
     });
