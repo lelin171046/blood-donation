@@ -22,12 +22,13 @@ import {
 import toast from "react-hot-toast"
 import useAxiosPublic from "@/Hook/useAxiosPublic"
 import Swal from "sweetalert2"
+import useAxiosSecure from "@/Hook/useAxiosSecure"
 
 const MyDonationRequests = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const axiosPublic = useAxiosPublic()
+  const axiosPublic = useAxiosSecure()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")

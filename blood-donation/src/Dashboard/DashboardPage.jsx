@@ -89,21 +89,21 @@ const DashboardPage = () => {
               {isAdmin && (
                 <>
                   <li>
-                    <NavLink to="/dashboard/admin-home" className="flex items-center p-2 space-x-3 rounded-md">
+                    <NavLink to="/dashboard/dashboard-home" className="flex items-center p-2 space-x-3 rounded-md">
                       <Home className="w-5 h-5 text-gray-600" />
                       <span>Admin Home</span>
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink to="/dashboard/addItem" className="flex items-center p-2 space-x-3 rounded-md">
+                    <NavLink to="/dashboard/add-content" className="flex items-center p-2 space-x-3 rounded-md">
                       <AudioWaveform className="w-5 h-5 text-gray-600" />
-                      <span>Add Item</span>
+                      <span>Add Blog Content</span>
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink to="/dashboard/manageItem" className="flex items-center p-2 space-x-3 rounded-md">
+                    <NavLink to="/dashboard/manage-content" className="flex items-center p-2 space-x-3 rounded-md">
                       <Package className="w-5 h-5 text-gray-600" />
-                      <span>Manage Item</span>
+                      <span>Manage Content</span>
                     </NavLink>
                   </li>
                   <li>
@@ -126,12 +126,7 @@ const DashboardPage = () => {
                   <span>User Home</span>
                 </NavLink>
               </li>
-              <li>
-                <NavLink to="/order/salad" className="flex items-center p-2 space-x-3 rounded-md">
-                  <MenuIcon className="w-5 h-5 text-gray-600" />
-                  <span>Menu</span>
-                </NavLink>
-              </li>
+             
               <li>
                 <NavLink to="/dashboard/my-donation-requests" className="flex items-center p-2 space-x-3 rounded-md">
                   <ShoppingCart className="w-5 h-5 text-gray-600" />

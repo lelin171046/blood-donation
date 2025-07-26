@@ -174,6 +174,36 @@ async function run() {
       res.send(result);
     });
 
+    // Update donation status to "in progress"
+app.patch("/api/donation-requests/:id/donate", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  const { donorId, donorName, donorEmail, status } = req.body;
+
+  try {
+    const result = await donationRequestCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          donorId,
+          donorName,
+          donorEmail,
+          status: status || "in progress",
+          updatedAt: new Date().toISOString(),
+        },
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).send({ message: "Donation request not found or already updated." });
+    }
+
+    res.send({ message: "Donation status updated successfully" });
+  } catch (err) {
+    console.error("Update Error:", err);
+    res.status(500).send({ message: "Failed to update donation status" });
+  }
+});
+
     // Ping DB
     await client.db("admin").command({ ping: 1 });
     console.log("✅ Connected to MongoDB!");

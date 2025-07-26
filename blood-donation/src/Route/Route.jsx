@@ -18,6 +18,7 @@ import PrivateRoute from './PrivateRoute';
 import AllUsersPage from '@/Dashboard/AllUsersPage';
 import AllBloodDonationRequestPage from '@/Dashboard/AllBloodDonationRequestPage';
 import DonationRequests from '@/Pages/DonationRequest';
+import DashboardHome from '@/Dashboard/DashboardHome';
 
 
 const router = createBrowserRouter([
@@ -82,6 +83,11 @@ const router = createBrowserRouter([
       {
         path: 'all-users',
         element: <AllUsersPage></AllUsersPage>
+      },
+      {
+        path: 'dashboard-home',
+        element: <DashboardHome></DashboardHome>
+
       },
       {
         path: 'my-donation-requests',
