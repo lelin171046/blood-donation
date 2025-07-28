@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useMemo } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -527,15 +527,18 @@ const AllBloodDonationRequestPage = () => {
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex gap-1">
-                            <Button
+                            <Link to={`/dashboard/update-request/${request._id}`}>
+                               <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => navigate(`/dashboard/edit-request/${request._id}`)}
                               className="bg-transparent"
                               disabled={request.status === "done" || request.status === "canceled"}
                             >
+                              
                               <Edit size={14} />
                             </Button>
+                              </Link>
+                           
                             <Button
                               size="sm"
                               variant="outline"

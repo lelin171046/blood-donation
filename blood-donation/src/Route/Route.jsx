@@ -19,6 +19,7 @@ import AllUsersPage from '@/Dashboard/AllUsersPage';
 import AllBloodDonationRequestPage from '@/Dashboard/AllBloodDonationRequestPage';
 import DonationRequests from '@/Pages/DonationRequest';
 import DashboardHome from '@/Dashboard/DashboardHome';
+import UpdateRequest from '@/Pages/UpdateRequest';
 
 
 const router = createBrowserRouter([
@@ -72,7 +73,8 @@ const router = createBrowserRouter([
       {
         path: 'donor-dashboard',
         element: <DonorDashboard></DonorDashboard>
-      }
+      },
+     
 
     ]
   },
@@ -100,6 +102,10 @@ const router = createBrowserRouter([
       {
         path: 'create-request',
         element: <CreateRequest></CreateRequest>
+      },
+       {
+        path: 'update-request/:id',
+        element: <UpdateRequest></UpdateRequest>
       }
     ]
   }

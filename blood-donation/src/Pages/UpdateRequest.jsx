@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import useAxiosSecure from "@/hooks/useAxiosSecure";
+// import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import useAuth from "@/Hook/useAuth";
+import useAxiosSecure from "@/Hook/useAxiosSecure";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const districts = {
@@ -15,7 +14,7 @@ const districts = {
   Sylhet: ["Beanibazar", "Zindabazar"],
 };
 
-const UpdateRequestPage = () => {
+const UpdateRequest = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const axiosSecure = useAxiosSecure();
@@ -33,7 +32,7 @@ const UpdateRequestPage = () => {
   useEffect(() => {
     axiosSecure.get(`/donation-requests/${id}`).then(res => {
       setFormData(res.data);
-      setUpazilas(districts[res.data.recipientDistrict] || []);
+     
     });
   }, [axiosSecure, id]);
 
@@ -75,19 +74,20 @@ const UpdateRequestPage = () => {
       <h2 className="text-2xl font-bold mb-6">Update Donation Request</h2>
       <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
         <div>
-          <Label>Requester Name</Label>
+          <label>Requester Name</label> 
+          l
           <Input type="text" value={user.displayName} readOnly />
         </div>
         <div>
-          <Label>Requester Email</Label>
+          <label>Requester Email</label>
           <Input type="email" value={user.email} readOnly />
         </div>
         <div>
-          <Label>Recipient Name</Label>
+          <label>Recipient Name</label>
           <Input name="recipientName" value={formData.recipientName} onChange={handleChange} required />
         </div>
         <div>
-          <Label>Recipient District</Label>
+          <label>Recipient District</label>
           <select name="recipientDistrict" value={formData.recipientDistrict} onChange={handleChange} className="w-full border p-2 rounded">
             <option value="">Select District</option>
             {Object.keys(districts).map(d => (
@@ -96,7 +96,7 @@ const UpdateRequestPage = () => {
           </select>
         </div>
         <div>
-          <Label>Recipient Upazila</Label>
+          <label>Recipient Upazila</label>
           <select name="recipientUpazila" value={formData.recipientUpazila} onChange={handleChange} className="w-full border p-2 rounded">
             <option value="">Select Upazila</option>
             {upazilas.map(u => (
@@ -105,15 +105,15 @@ const UpdateRequestPage = () => {
           </select>
         </div>
         <div>
-          <Label>Hospital Name</Label>
+          <label>Hospital Name</label>
           <Input name="hospitalName" value={formData.hospitalName} onChange={handleChange} required />
         </div>
         <div>
-          <Label>Full Address</Label>
+          <label>Full Address</label>
           <Input name="fullAddress" value={formData.fullAddress} onChange={handleChange} required />
         </div>
         <div>
-          <Label>Blood Group</Label>
+          <label>Blood Group</label>
           <select name="bloodGroup" value={formData.bloodGroup} onChange={handleChange} className="w-full border p-2 rounded" required>
             <option value="">Select Blood Group</option>
             {bloodGroups.map(b => (
@@ -122,15 +122,15 @@ const UpdateRequestPage = () => {
           </select>
         </div>
         <div>
-          <Label>Donation Date</Label>
+          <label>Donation Date</label>
           <Input type="date" name="donationDate" value={formData.donationDate} onChange={handleChange} required />
         </div>
         <div>
-          <Label>Donation Time</Label>
+          <label>Donation Time</label>
           <Input type="time" name="donationTime" value={formData.donationTime} onChange={handleChange} required />
         </div>
         <div>
-          <Label>Request Message</Label>
+          <label>Request Message</label>
           <Textarea name="requestMessage" value={formData.requestMessage} onChange={handleChange} required />
         </div>
         <Button type="submit" className="w-full mt-4">Update Request</Button>
@@ -139,4 +139,4 @@ const UpdateRequestPage = () => {
   );
 };
 
-export default UpdateRequestPage;
+export default UpdateRequest;
