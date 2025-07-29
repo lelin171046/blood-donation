@@ -203,6 +203,21 @@ app.patch("/api/donation-requests/:id/donate", verifyToken, async (req, res) => 
   }
 });
 
+ //Payment------------------------------------payment
+
+      app.post('/create-checkout-session', async (req, res) =>{
+        const { price } = req.body;
+        const amount = parseInt(price * 100);
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amount,
+          currency: 'usd',
+          payment_method_types: ['card']
+        })
+        res.send({
+          clientSecret: paymentIntent.client_secret
+        })
+      })
+
 // update full request by ID
 app.patch('/donation-requests/:id', verifyToken, async (req, res) =>{
   const { id } = req.params;
