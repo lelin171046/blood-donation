@@ -16,6 +16,7 @@ const districts = {
 
 const UpdateRequest = () => {
   const { id } = useParams();
+  console.log(id, 'ok');
   const navigate = useNavigate();
   const axiosSecure = useAxiosSecure();
   const { user, loading } = useAuth();
@@ -30,7 +31,7 @@ const UpdateRequest = () => {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    axiosSecure.get(`/donation-requests/${id}`).then(res => {
+    axiosSecure.get(`/api/donation-requests/${id}`).then(res => {
       setFormData(res.data);
      
     });
@@ -131,7 +132,7 @@ const UpdateRequest = () => {
         </div>
         <div>
           <label>Request Message</label>
-          <Textarea name="requestMessage" value={formData.requestMessage} onChange={handleChange} required />
+          <textarea name="requestMessage" value={formData.requestMessage} onChange={handleChange} required />
         </div>
         <Button type="submit" className="w-full mt-4">Update Request</Button>
       </form>

@@ -128,7 +128,6 @@ async function run() {
     // Create Donation Request
     app.post("/api/donation-requests", verifyToken, async (req, res) => {
       const request = req.body;
-      console.log(request, 'frm clnt');
       const result = await donationRequestCollection.insertOne(request);
       res.send(result);
     });
@@ -203,6 +202,12 @@ app.patch("/api/donation-requests/:id/donate", verifyToken, async (req, res) => 
     res.status(500).send({ message: "Failed to update donation status" });
   }
 });
+
+// update full request by ID
+app.patch('/donation-requests/:id', verifyToken, async (req, res) =>{
+  const { id } = req.params;
+  
+} )
 
     // Ping DB
     await client.db("admin").command({ ping: 1 });
