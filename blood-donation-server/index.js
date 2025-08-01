@@ -33,6 +33,7 @@ async function run() {
   try {
     const usersCollection = client.db("bloodDonationDB").collection("users");
     const donationRequestCollection = client.db("bloodDonationDB").collection("donationRequest");
+    const donationBlogCollection = client.db("bloodDonationDB").collection("donationBlog")
 
     // Middleware: Verify JWT token
     const verifyToken = (req, res, next) => {
@@ -202,6 +203,14 @@ app.patch("/api/donation-requests/:id/donate", verifyToken, async (req, res) => 
     res.status(500).send({ message: "Failed to update donation status" });
   }
 });
+
+///add blog
+
+  app.post("/donation-requests", verifyToken, verifyAdmin, async (req, res) => {
+      const request = req.body;
+      const result = await donationBlogCollection.insertOne(request);
+      res.send(result);
+    });
 
  //Payment------------------------------------payment
 

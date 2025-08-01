@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Example from "./Example"; // Adjust import path accordingly
+import { useParams } from "react-router-dom";
 
 const AddBlogPage = () => {
   const [formData, setFormData] = useState({
@@ -7,6 +8,7 @@ const AddBlogPage = () => {
     thumbnail: null,
     content: "",
   });
+  const {content} = useParams();
 
   const handleInputChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -19,7 +21,7 @@ const AddBlogPage = () => {
       status: "draft", // default status
       createdAt: new Date().toISOString(),
     };
-    console.log("Submitted Blog:", blog);
+    console.log("Submitted Blog:", content, blog);
     // send blog to backend
   };
 
@@ -43,7 +45,7 @@ const AddBlogPage = () => {
         onChange={(e) =>
           handleInputChange("thumbnail", URL.createObjectURL(e.target.files[0]))
         }
-        className="mb-4"
+        className="mb-4 w-full p-3 border border-gray-300 rounded"
       />
 
       {/* Rich Text Editor */}
