@@ -95,7 +95,7 @@ const DashboardPage = () => {
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink to="/dashboard/add-content" className="flex items-center p-2 space-x-3 rounded-md">
+                    <NavLink to="/dashboard/content-manage/add-blog" className="flex items-center p-2 space-x-3 rounded-md">
                       <AudioWaveform className="w-5 h-5 text-gray-600" />
                       <span>Add Blog Content</span>
                     </NavLink>

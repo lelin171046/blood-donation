@@ -20,6 +20,7 @@ import AllBloodDonationRequestPage from '@/Dashboard/AllBloodDonationRequestPage
 import DonationRequests from '@/Pages/DonationRequest';
 import DashboardHome from '@/Dashboard/DashboardHome';
 import UpdateRequest from '@/Pages/UpdateRequest';
+import Example from '@/Dashboard/AddBlog';
 
 
 const router = createBrowserRouter([
@@ -106,6 +107,10 @@ const router = createBrowserRouter([
        {
         path: 'update-request/:id',
         element: <UpdateRequest></UpdateRequest>
+      },
+      {
+        path: 'content-manage/add-blog',
+        element: <Example></Example>
       }
     ]
   }
