@@ -1,27 +1,27 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useRef, useMemo } from 'react';
 import JoditEditor from 'jodit-react';
 
-const Example = ({ placeholder }) => {
-	const editor = useRef(null);
-	const [content, setContent] = useState('');
+const Example = ({ placeholder, value, onChange }) => {
+  const editor = useRef(null);
 
-	const config = useMemo(() => ({
-			readonly: false, // all options from https://xdsoft.net/jodit/docs/,
-			placeholder: placeholder || 'Start typings...'
-		}),
-		[placeholder]
-	);
+  const config = useMemo(
+    () => ({
+      readonly: false,
+      placeholder: placeholder || 'Start typing...',
+    }),
+    [placeholder]
+  );
 
-	return (
-		<JoditEditor
-			ref={editor}
-			value={content}
-			config={config}
-			tabIndex={1} // tabIndex of textarea
-			onBlur={newContent => setContent(newContent)} // preferred to use only this option to update the content for performance reasons
-			onChange={newContent => {}}
-		/>
-	);
+  return (
+    <JoditEditor
+      ref={editor}
+      value={value}
+      config={config}
+      tabIndex={1}
+      onChange={(newContent) => onChange(newContent)} // 👈 live update
+      
+    />
+  );
 };
 
 export default Example;

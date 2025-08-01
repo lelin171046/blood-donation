@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import Example from "./Example"; // Adjust import path accordingly
-import { useParams } from "react-router-dom";
+import Example from "./Example"; // adjust path
 
 const AddBlogPage = () => {
   const [formData, setFormData] = useState({
@@ -8,7 +7,6 @@ const AddBlogPage = () => {
     thumbnail: null,
     content: "",
   });
-  const {content} = useParams();
 
   const handleInputChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -16,20 +14,20 @@ const AddBlogPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const plainText = new DOMParser().parseFromString(formData.content, 'text/html').body.textContent;
     const blog = {
       ...formData,
-      status: "draft", // default status
+      plainTextContent: plainText,
+      status: "draft",
       createdAt: new Date().toISOString(),
     };
-    console.log("Submitted Blog:", content, blog);
-    // send blog to backend
+    console.log("Submitted Blog:", blog);
   };
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">Add New Blog</h1>
 
-      {/* Title */}
       <input
         type="text"
         placeholder="Blog Title"
@@ -38,7 +36,6 @@ const AddBlogPage = () => {
         className="w-full p-3 border border-gray-300 rounded mb-4"
       />
 
-      {/* Thumbnail */}
       <input
         type="file"
         accept="image/*"
@@ -55,10 +52,9 @@ const AddBlogPage = () => {
         placeholder="Write your blog content here..."
       />
 
-      {/* Submit */}
       <button
         onClick={handleSubmit}
-        className="mt-4 px-6 py-2 bg-blue-600 text-white rounded"
+        className="mt-4 bg-blue-600 text-white px-6 py-2 rounded"
       >
         Create Blog
       </button>
