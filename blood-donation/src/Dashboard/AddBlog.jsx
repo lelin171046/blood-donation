@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Example from "./Example"; // adjust path
+import useAxiosSecure from "@/Hook/useAxiosSecure";
 
 const AddBlogPage = () => {
   const [formData, setFormData] = useState({
@@ -7,6 +8,7 @@ const AddBlogPage = () => {
     thumbnail: null,
     content: "",
   });
+  const axiosSecure = useAxiosSecure();
 
   const handleInputChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -21,6 +23,7 @@ const AddBlogPage = () => {
       status: "draft",
       createdAt: new Date().toISOString(),
     };
+    axiosSecure.post('/add-blog', blog)
     console.log("Submitted Blog:", blog);
   };
 

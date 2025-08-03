@@ -206,7 +206,7 @@ app.patch("/api/donation-requests/:id/donate", verifyToken, async (req, res) => 
 
 ///add blog
 
-  app.post("/donation-requests", verifyToken, verifyAdmin, async (req, res) => {
+  app.post("/add-blog", verifyToken, verifyAdmin, async (req, res) => {
       const request = req.body;
       const result = await donationBlogCollection.insertOne(request);
       res.send(result);
