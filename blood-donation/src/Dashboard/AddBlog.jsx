@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Example from "./Example"; // adjust path
 import useAxiosSecure from "@/Hook/useAxiosSecure";
+import toast from "react-hot-toast";
 
 const AddBlogPage = () => {
   const [formData, setFormData] = useState({
@@ -24,6 +25,7 @@ const AddBlogPage = () => {
       createdAt: new Date().toISOString(),
     };
     axiosSecure.post('/add-blog', blog)
+    toast.success('Add success')
     console.log("Submitted Blog:", blog);
   };
 
