@@ -1,5 +1,6 @@
 import React from 'react';
 import { Users, Heart, DollarSign } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 const DashboardHome = () => {
   // Sample data - you can replace these with actual data from your state/props
@@ -8,6 +9,20 @@ const DashboardHome = () => {
     totalFunding: 45280,
     totalBloodRequests: 89
   };
+  const axiosSecure = 
+
+    const { refetch, data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const res = await axiosSecure.get('/users', 
+        // { headers: {
+        //   authorization : `Bearer ${localStorage.getItem('access-token')}`
+        // }}
+      );
+     
+      return res.data;
+    }
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 p-6">
