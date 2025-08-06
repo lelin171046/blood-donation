@@ -1,6 +1,7 @@
 import React from 'react';
 import { Users, Heart, DollarSign } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import useAxiosSecure from '@/Hook/useAxiosSecure';
 
 const DashboardHome = () => {
   // Sample data - you can replace these with actual data from your state/props
@@ -9,7 +10,7 @@ const DashboardHome = () => {
     totalFunding: 45280,
     totalBloodRequests: 89
   };
-  const axiosSecure = 
+  const axiosSecure = useAxiosSecure();
 
     const { refetch, data: users = [] } = useQuery({
     queryKey: ['users'],
@@ -62,7 +63,7 @@ const DashboardHome = () => {
                   </div>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-1">
-                  {stats.totalDonors.toLocaleString()}
+                  {users?.length}
                 </h3>
                 <p className="text-gray-600 font-medium">Total Donors</p>
                 <p className="text-sm text-gray-500 mt-2">

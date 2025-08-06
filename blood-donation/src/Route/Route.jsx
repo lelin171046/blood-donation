@@ -21,6 +21,7 @@ import DonationRequests from '@/Pages/DonationRequest';
 import DashboardHome from '@/Dashboard/DashboardHome';
 import UpdateRequest from '@/Pages/UpdateRequest';
 import Example from '@/Dashboard/AddBlog';
+import InvoicePage from '@/Component/page';
 
 
 const router = createBrowserRouter([
@@ -66,6 +67,10 @@ const router = createBrowserRouter([
       {
         path: 'funding',
         element: <Funding></Funding>
+      },
+      {
+        path: 'invoice',
+        element: <InvoicePage></InvoicePage>
       },
       {
         path: 'search',

@@ -42,6 +42,9 @@ export const Navbar = () => {
 >
             Home
             </Link>
+            <Link to={'/invoice'}>
+            invoice
+            </Link>
             {navLinks.map((link) => (
               <Link
               
