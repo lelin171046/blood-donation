@@ -22,6 +22,7 @@ import DashboardHome from '@/Dashboard/DashboardHome';
 import UpdateRequest from '@/Pages/UpdateRequest';
 import Example from '@/Dashboard/AddBlog';
 import InvoicePage from '@/Component/page';
+import LiveStream from '@/Component/page';
 
 
 const router = createBrowserRouter([
@@ -70,7 +71,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'invoice',
-        element: <InvoicePage></InvoicePage>
+        element: <LiveStream></LiveStream>
       },
       {
         path: 'search',

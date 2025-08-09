@@ -24,6 +24,13 @@ const DashboardHome = () => {
       return res.data;
     }
   });
+  const { data: donationRequests = [] } = useQuery({
+  queryKey: ['donationRequests'],
+  queryFn: async () => {
+    const res = await axiosSecure.get('/api/donation-requests/all');
+    return res.data;
+  }
+});
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 p-6">
@@ -103,7 +110,7 @@ const DashboardHome = () => {
                   </div>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-1">
-                  {stats.totalBloodRequests}
+                  {donationRequests.length}
                 </h3>
                 <p className="text-gray-600 font-medium">Blood Requests</p>
                 <p className="text-sm text-gray-500 mt-2">
