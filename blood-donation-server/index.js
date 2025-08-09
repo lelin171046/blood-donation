@@ -208,7 +208,6 @@ app.patch("/api/donation-requests/:id/donate", verifyToken, async (req, res) => 
 
   app.post("/add-blog", verifyToken, verifyAdmin, async (req, res) => {
       const request = req.body;
-      console.log(request, 'ok?');
       const result = await donationBlogCollection.insertOne(request);
       res.send(result);
     });
