@@ -169,7 +169,7 @@ const Blog = () => {
                 <Card
                   key={blog.id}
                   className="group hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden"
-                  onClick={() => navigate(`/blog/${blog.slug}`)}
+                  onClick={() => navigate(`/blog/${blog._id}`)}
                 >
                   <div className="relative">
                     <img

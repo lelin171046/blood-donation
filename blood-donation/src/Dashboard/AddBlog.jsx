@@ -1,12 +1,8 @@
 import React, { useState } from "react";
-import Example from "./Example"; // adjust path
+import Example from "./Example"; 
 import useAxiosSecure from "@/Hook/useAxiosSecure";
 import toast from "react-hot-toast";
-import useAxiosPublic from "@/Hook/useAxiosPublic";
 import { uploadToImgBB } from "@/Share/ImageUpload";
-
-// const img_hosting_key = import.meta.env.client.IMGBB_API_KEY;
-// const img_hosting_api = `https://api.imgbb.com/1/upload?key=${img_hosting_key}`;
 
 const AddBlogPage = () => {
   const [formData, setFormData] = useState({
@@ -14,47 +10,53 @@ const AddBlogPage = () => {
     thumbnail: null,
     content: "",
   });
+  const [isLoading, setIsLoading] = useState(false); // <-- loading state
   const axiosSecure = useAxiosSecure();
-  const axiosPublic = useAxiosPublic()
 
   const handleInputChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!formData.thumbnail) {
-    toast.error("Please select an image");
-    return;
-  }
+    if (!formData.thumbnail) {
+      toast.error("Please select an image");
+      return;
+    }
 
-  // Prepare image for upload
-   const uploadedImage = await uploadToImgBB(formData.thumbnail);
-      console.log("ImgBB uploaded:", uploadedImage);
-  // console.log(res.data);
+    try {
+      setIsLoading(true); // start loading
 
-  const plainText = new DOMParser()
-    .parseFromString(formData.content, "text/html")
-    .body.textContent;
+      // Upload image
+      const uploadedImage = await uploadToImgBB(formData.thumbnail);
 
-  const blog = {
-    title: formData.title,
-    thumbnail: uploadedImage.url, // URL from imgbb
-    content: formData.content,
-    plainTextContent: plainText,
-    status: "draft",
-    createdAt: new Date().toISOString(),
+      const plainText = new DOMParser()
+        .parseFromString(formData.content, "text/html")
+        .body.textContent;
+
+      const blog = {
+        title: formData.title,
+        thumbnail: uploadedImage.url,
+        content: formData.content,
+        plainTextContent: plainText,
+        status: "draft",
+        createdAt: new Date().toISOString(),
+      };
+
+      const blogRes = await axiosSecure.post("/add-blog", blog);
+
+      if (blogRes.data.insertedId) {
+        toast.success("Blog added successfully");
+        setFormData({ title: "", thumbnail: null, content: "" });
+      }
+    } catch (error) {
+      toast.error("Failed to add blog");
+      console.error(error);
+    } finally {
+      setIsLoading(false); // stop loading
+    }
   };
-
-  const blogRes = await axiosSecure.post("/add-blog", blog);
-
-  if (blogRes.data.insertedId) {
-    toast.success("Add success");
-    console.log("Submitted Blog:", blog);
-  }
-};
-
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -71,13 +73,10 @@ const AddBlogPage = () => {
       <input
         type="file"
         accept="image/*"
-         onChange={(e) =>
-    handleInputChange("thumbnail", e.target.files[0]) // store file directly
-  }
+        onChange={(e) => handleInputChange("thumbnail", e.target.files[0])}
         className="mb-4 w-full p-3 border border-gray-300 rounded"
       />
 
-      {/* Rich Text Editor */}
       <Example
         value={formData.content}
         onChange={(value) => handleInputChange("content", value)}
@@ -86,9 +85,12 @@ const AddBlogPage = () => {
 
       <button
         onClick={handleSubmit}
-        className="mt-4 bg-blue-600 text-white px-6 py-2 rounded"
+        disabled={isLoading} // disable while loading
+        className={`mt-4 px-6 py-2 rounded text-white ${
+          isLoading ? "bg-gray-500 cursor-not-allowed" : "bg-blue-600"
+        }`}
       >
-        Create Blog
+        {isLoading ? "Uploading..." : "Create Blog"}
       </button>
     </div>
   );

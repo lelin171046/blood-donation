@@ -24,6 +24,7 @@ import Example from '@/Dashboard/AddBlog';
 import InvoicePage from '@/Component/page';
 import LiveStream from '@/Component/page';
 import ManageBlogs from '@/Dashboard/ManageBlogs';
+import BlogDetails from '@/Pages/BlogDetails';
 
 
 const router = createBrowserRouter([
@@ -82,6 +83,10 @@ const router = createBrowserRouter([
         path: 'donor-dashboard',
         element: <DonorDashboard></DonorDashboard>
       },
+      {
+        path: 'blog/:id',
+        element: <BlogDetails></BlogDetails>
+      }
      
 
     ]

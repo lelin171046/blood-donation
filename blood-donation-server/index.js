@@ -216,7 +216,12 @@ app.get('/all-blogs', async (req, res)=>{
   const result = await donationBlogCollection.find().toArray()
   res.send(result)
 })
-
+//blog details
+ app.get("/all-blogs/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await donationBlogCollection.findOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
 /// Delete blog--------------
 app.delete("/all-blogs/:id", verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
