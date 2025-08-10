@@ -173,7 +173,7 @@ const Blog = () => {
                 >
                   <div className="relative">
                     <img
-                      src={blog.image || "/placeholder.svg"}
+                      src={blog.thumbnail || "/placeholder.svg"}
                       alt={blog.title}
                       className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
@@ -188,7 +188,7 @@ const Blog = () => {
                       </span>
                       <div className="flex items-center gap-1">
                         <Calendar size={14} />
-                        {formatDate(blog.publishedAt)}
+                        {formatDate(blog.createdAt)}
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock size={14} />
@@ -228,7 +228,7 @@ const Blog = () => {
               <h2 className="text-2xl font-bold text-gray-900">Latest Articles</h2>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {blogs?.map((blog) => (
                 <Card
                   key={blog.id}
@@ -237,7 +237,8 @@ const Blog = () => {
                 >
                   <div className="relative">
                     <img
-                      src={blog.image || "/placeholder.svg"}
+                      src={blog.
+thumbnail || "/placeholder.svg"}
                       alt={blog.title}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
@@ -285,7 +286,7 @@ const Blog = () => {
                   </CardContent>
                 </Card>
               ))}
-            </div>
+            </div> */}
           </div>
         )}
 

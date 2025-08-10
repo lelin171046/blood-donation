@@ -23,6 +23,7 @@ import UpdateRequest from '@/Pages/UpdateRequest';
 import Example from '@/Dashboard/AddBlog';
 import InvoicePage from '@/Component/page';
 import LiveStream from '@/Component/page';
+import ManageBlogs from '@/Dashboard/ManageBlogs';
 
 
 const router = createBrowserRouter([
@@ -117,6 +118,10 @@ const router = createBrowserRouter([
       {
         path: 'content-manage/add-blog',
         element: <Example></Example>
+      },
+      {
+        path: 'manage-content',
+        element: <ManageBlogs></ManageBlogs>
       }
     ]
   }

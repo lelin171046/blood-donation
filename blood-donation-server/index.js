@@ -216,6 +216,13 @@ app.get('/all-blogs', async (req, res)=>{
   const result = await donationBlogCollection.find().toArray()
   res.send(result)
 })
+
+/// Delete blog--------------
+app.delete("/all-blogs/:id", verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const result = await donationBlogCollection.deleteOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
  //Payment------------------------------------payment
 
       app.post('/create-checkout-session', async (req, res) =>{
