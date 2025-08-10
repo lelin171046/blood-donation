@@ -5,8 +5,8 @@ import toast from "react-hot-toast";
 import useAxiosPublic from "@/Hook/useAxiosPublic";
 import { uploadToImgBB } from "@/Share/ImageUpload";
 
-const img_hosting_key = import.meta.env.client.IMGBB_API_KEY;
-const img_hosting_api = `https://api.imgbb.com/1/upload?key=${img_hosting_key}`;
+// const img_hosting_key = import.meta.env.client.IMGBB_API_KEY;
+// const img_hosting_api = `https://api.imgbb.com/1/upload?key=${img_hosting_key}`;
 
 const AddBlogPage = () => {
   const [formData, setFormData] = useState({
@@ -40,7 +40,7 @@ const AddBlogPage = () => {
 
   const blog = {
     title: formData.title,
-    thumbnail: res.data.data.display_url, // URL from imgbb
+    thumbnail: uploadedImage.url, // URL from imgbb
     content: formData.content,
     plainTextContent: plainText,
     status: "draft",

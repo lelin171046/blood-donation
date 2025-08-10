@@ -211,7 +211,11 @@ app.patch("/api/donation-requests/:id/donate", verifyToken, async (req, res) => 
       const result = await donationBlogCollection.insertOne(request);
       res.send(result);
     });
-
+//get blogs===========
+app.get('/all-blogs', async (req, res)=>{
+  const result = await donationBlogCollection.find().toArray()
+  res.send(result)
+})
  //Payment------------------------------------payment
 
       app.post('/create-checkout-session', async (req, res) =>{
