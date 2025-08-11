@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import useAuth from "@/Hook/useAuth";
 import useAxiosSecure from "@/Hook/useAxiosSecure";
+import Swal from "sweetalert2";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const districts = {
@@ -16,7 +17,7 @@ const districts = {
 
 const UpdateRequest = () => {
   const { id } = useParams();
-  console.log(id, 'ok');
+  // console.log(id, 'ok');
   const navigate = useNavigate();
   const axiosSecure = useAxiosSecure();
   const { user, loading } = useAuth();
@@ -64,8 +65,26 @@ const UpdateRequest = () => {
       status: "pending",
     };
 
-    await axiosSecure.patch(`/donation-requests/${id}`, updated);
-    navigate("/dashboard/my-requests");
+    console.log(updated, 'checking');
+
+   const reqUpdte = await axiosSecure.patch(`/donation-requests/${id}`, updated);
+     if(reqUpdte.data.modifiedCount > 0){
+                // show success popup
+                // reset();
+                Swal.fire({
+                    position: "top-end",
+                    icon: "success",
+                    title: `${e?.name} is updated to the menu.`,
+                    showConfirmButton: false,
+                    timer: 1500
+                    
+                  }
+                );
+                navigate("/dashboard/my-donation-requests");
+            }
+            else('try again')
+
+    
   };
 
   if (!formData) return <p className="p-6">Loading...</p>;

@@ -241,8 +241,27 @@ app.delete("/all-blogs/:id", verifyToken, verifyAdmin, async (req, res) => {
         res.send({
           clientSecret: paymentIntent.client_secret
         })
+
+
       })
 
+        //store user payment info
+      app.post('/payment', async (req, res)=>{
+        const payment = req.body;
+        const paymentResult = await paymentCollection.insertOne(payment);
+        //know delete cart items
+        const query = { _id: {
+          $in: payment.cartIds.map(id=> new ObjectId(id))
+        }
+
+        }
+
+        const deleteResult = await cartCollection.deleteMany(query)
+        // console.log('pay info', payment)
+        res.send({paymentResult, deleteResult})
+      })
+
+      
 // update full request by ID
 app.patch('/donation-requests/:id', verifyToken, async (req, res) =>{
   const { id } = req.params;

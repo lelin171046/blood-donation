@@ -73,7 +73,7 @@ export const Navbar = () => {
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                     <Link
-                      to="/dashboard"
+                      to="/dashboard/dashboard-home"
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setShowUserMenu(false)}
                     >
@@ -148,21 +148,21 @@ export const Navbar = () => {
                     <span className="text-sm font-medium text-gray-700">{user.name}</span>
                   </div>
                   <Link
-                    to="/dashboard"
+                    to="/dashboard/dashboard-home"
                     className="flex items-center px-3 py-2 text-gray-700 hover:text-red-600"
                     onClick={() => setIsOpen(false)}
                   >
                     <LayoutDashboard className="h-4 w-4 mr-2" />
                     Dashboard
                   </Link>
-                  <Link
+                  {/* <Link
                       to="/donor-dashboard"
                       className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setShowUserMenu(false)}
                     >
                       <LayoutDashboard className="h-4 w-4 mr-2" />
                      Donor Dashboard
-                    </Link>
+                    </Link> */}
                   <Link
                     to="/dashboard/my-donation-requests"
                     className="flex items-center px-3 py-2 text-gray-700 hover:text-red-600"
