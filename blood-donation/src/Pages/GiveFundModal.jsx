@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DollarSign, CreditCard, Lock } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import { loadStripe } from "@stripe/stripe-js"
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js"
+import useAxiosSecure from "@/Hook/useAxiosSecure"
 
 // Initialize Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_PAYMENT_STRIPE)
@@ -16,83 +17,91 @@ const stripePromise = loadStripe(import.meta.env.VITE_PAYMENT_STRIPE)
 const PaymentForm = ({ amount, message, user, onSuccess, onClose, setIsProcessing, isProcessing }) => {
   const stripe = useStripe()
   const elements = useElements()
+  const axiosSecure = useAxiosSecure();
+ const [clientSecret, setClientSecret] = useState('')
+
+const totalAmount = parseFloat(amount);
+
+   useEffect(() => {
+  if (totalAmount > 0) {
+    axiosSecure.post('/create-checkout-session', { price: totalAmount })
+      .then(res => {
+        setClientSecret(res.data.clientSecret);
+      });
+  }
+}, [useAxiosSecure, totalAmount]);
+
 
   const handleSubmit = async (event) => {
-    event.preventDefault()
-
-    if (!stripe || !elements) {
-      return
+    // Block native form submission.
+    event.preventDefault();
+     if (!stripe || !elements) {
+      // Stripe.js has not loaded yet. Make sure to disable
+      // form submission until Stripe.js has loaded.
+      return;
     }
 
-    setIsProcessing(true)
+     const card = elements.getElement(CardElement);
 
-    try {
-      // Step 1: Create payment intent
-      const response = await fetch("/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          price: Number.parseFloat(amount),
-        }),
-      })
+    if (card == null) {
+      return;
+    }
 
-      const { clientSecret } = await response.json()
+    // Use your card Element with other Stripe.js APIs
+    const {error, paymentMethod} = await stripe.createPaymentMethod({
+      type: 'card',
+      card,
+    });
 
-      // Step 2: Confirm payment
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+    if (error) {
+      console.log('[error]', error);
+      setError(error.message)
+    } else {
+      console.log('[PaymentMethod]', paymentMethod);
+      setError('')
+    }
+//confirm payment
+     const {paymentIntent, error: confirmError} = await stripe.confirmCardPayment(
+      clientSecret, {
         payment_method: {
-          card: elements.getElement(CardElement),
+          card: card,
           billing_details: {
-            name: user?.name || "Anonymous",
-            email: user?.email || "",
-          },
-        },
-      })
-
-      if (error) {
-        throw error
-      }
-
-      if (paymentIntent.status === "succeeded") {
-        // Step 3: Save payment record to database
-        const paymentData = {
-          amount: Number.parseFloat(amount),
-          message: message,
-          email: user?.email,
-          donorId: user?.uid,
-          donorName: user?.name,
-          transactionId: paymentIntent.id,
-          status: "completed",
-          currency: "usd",
-          paymentMethod: "card",
-          cartIds: [], // Empty for donations
-        }
-
-        const saveResponse = await fetch("/payment", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(paymentData),
-        })
-
-        if (saveResponse.ok) {
-          toast.success("Thank you for your generous donation!")
-          onSuccess()
-        } else {
-          throw new Error("Failed to save payment record")
+            email: user?.email || 'anonymous',
+            name: user?.displayName || 'anonymous'
+          }
         }
       }
-    } catch (error) {
-      console.error("Payment failed:", error)
-      toast.error(error.message || "Payment failed. Please try again.")
-    } finally {
-      setIsProcessing(false)
-    }
-  }
+     )
+     if(confirmError){
+      console.log('confirm error')
+     }
+     else{
+      console.log('payment intent', paymentIntent)
+      if(paymentIntent.status === 'succeeded'){
+        // console.log('tc ID:', paymentIntent.id)
+        setTransactionId(paymentIntent.id)
+        const payment = {
+          email: user.email,
+          transactionId: paymentIntent.id ,
+          price: totalAmount,
+          date: new Date(), //use utc time by moment js,
+          
+          status: 'pending'
+        }
 
+        const res = await useAxiosSecure.post('/payment', payment);
+        console.log(res)
+        if(res.data?.paymentResult?.insertedId){
+          toast.success('Payment Successful!')
+        }
+
+
+        refetch()
+        navigate('/dashboard/payment-history')
+      }
+     }
+
+     }
   const cardElementOptions = {
     style: {
       base: {
