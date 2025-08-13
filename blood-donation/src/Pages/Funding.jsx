@@ -22,6 +22,7 @@ import useAuth from "@/Hook/useAuth"
 import { useNavigate } from "react-router-dom"
 import toast from "react-hot-toast"
 import GiveFundModal from "./GiveFundModal"
+import useAxiosSecure from "@/Hook/useAxiosSecure"
 
 const Funding = () => {
   const { user } = useAuth()
@@ -33,7 +34,7 @@ const Funding = () => {
   const [dateFilter, setDateFilter] = useState("all")
   const [amountFilter, setAmountFilter] = useState("all")
   const [showGiveFundModal, setShowGiveFundModal] = useState(false)
-
+const axiosSecure = useAxiosSecure()
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
@@ -60,186 +61,29 @@ const Funding = () => {
   }, [user, navigate])
 
   // Mock funding data - replace with actual API call
-  const mockFunds = [
-    {
-      id: 1,
-      donorName: "Ahmed Rahman",
-      donorEmail: "ahmed.rahman@email.com",
-      amount: 5000,
-      currency: "BDT",
-      fundingDate: "2024-07-20T10:30:00Z",
-      paymentMethod: "Credit Card",
-      transactionId: "txn_1234567890",
-      status: "completed",
-      message: "Keep up the great work! Happy to support this noble cause.",
-      donorId: "user_001",
-    },
-    {
-      id: 2,
-      donorName: "Fatima Khatun",
-      donorEmail: "fatima.khatun@email.com",
-      amount: 2500,
-      currency: "BDT",
-      fundingDate: "2024-07-19T15:45:00Z",
-      paymentMethod: "Debit Card",
-      transactionId: "txn_1234567891",
-      status: "completed",
-      message: "Thank you for saving lives every day.",
-      donorId: "user_002",
-    },
-    {
-      id: 3,
-      donorName: "Mohammad Ali",
-      donorEmail: "mohammad.ali@email.com",
-      amount: 10000,
-      currency: "BDT",
-      fundingDate: "2024-07-18T09:20:00Z",
-      paymentMethod: "Bank Transfer",
-      transactionId: "txn_1234567892",
-      status: "completed",
-      message: "Proud to contribute to this life-saving mission.",
-      donorId: "user_003",
-    },
-    {
-      id: 4,
-      donorName: "Rashida Begum",
-      donorEmail: "rashida.begum@email.com",
-      amount: 1500,
-      currency: "BDT",
-      fundingDate: "2024-07-17T14:10:00Z",
-      paymentMethod: "Credit Card",
-      transactionId: "txn_1234567893",
-      status: "completed",
-      message: "",
-      donorId: "user_004",
-    },
-    {
-      id: 5,
-      donorName: "Abdul Karim",
-      donorEmail: "abdul.karim@email.com",
-      amount: 7500,
-      currency: "BDT",
-      fundingDate: "2024-07-16T11:55:00Z",
-      paymentMethod: "Credit Card",
-      transactionId: "txn_1234567894",
-      status: "completed",
-      message: "May Allah bless this organization and its work.",
-      donorId: "user_005",
-    },
-    {
-      id: 6,
-      donorName: "Nasir Ahmed",
-      donorEmail: "nasir.ahmed@email.com",
-      amount: 3000,
-      currency: "BDT",
-      fundingDate: "2024-07-15T16:30:00Z",
-      paymentMethod: "Debit Card",
-      transactionId: "txn_1234567895",
-      status: "completed",
-      message: "Small contribution for a big cause.",
-      donorId: "user_006",
-    },
-    {
-      id: 7,
-      donorName: "Salma Khatun",
-      donorEmail: "salma.khatun@email.com",
-      amount: 4500,
-      currency: "BDT",
-      fundingDate: "2024-07-14T13:20:00Z",
-      paymentMethod: "Credit Card",
-      transactionId: "txn_1234567896",
-      status: "completed",
-      message: "Thank you for making blood donation accessible to everyone.",
-      donorId: "user_007",
-    },
-    {
-      id: 8,
-      donorName: "Ibrahim Hassan",
-      donorEmail: "ibrahim.hassan@email.com",
-      amount: 6000,
-      currency: "BDT",
-      fundingDate: "2024-07-13T08:45:00Z",
-      paymentMethod: "Bank Transfer",
-      transactionId: "txn_1234567897",
-      status: "completed",
-      message: "Keep saving lives!",
-      donorId: "user_008",
-    },
-    {
-      id: 9,
-      donorName: "Ayesha Rahman",
-      donorEmail: "ayesha.rahman@email.com",
-      amount: 2000,
-      currency: "BDT",
-      fundingDate: "2024-07-12T12:15:00Z",
-      paymentMethod: "Credit Card",
-      transactionId: "txn_1234567898",
-      status: "completed",
-      message: "",
-      donorId: "user_009",
-    },
-    {
-      id: 10,
-      donorName: "Kamal Uddin",
-      donorEmail: "kamal.uddin@email.com",
-      amount: 8500,
-      currency: "BDT",
-      fundingDate: "2024-07-11T17:40:00Z",
-      paymentMethod: "Credit Card",
-      transactionId: "txn_1234567899",
-      status: "completed",
-      message: "Honored to support this noble cause.",
-      donorId: "user_010",
-    },
-    {
-      id: 11,
-      donorName: "Rubina Akter",
-      donorEmail: "rubina.akter@email.com",
-      amount: 3500,
-      currency: "BDT",
-      fundingDate: "2024-07-10T10:25:00Z",
-      paymentMethod: "Debit Card",
-      transactionId: "txn_1234567900",
-      status: "completed",
-      message: "Every drop counts, every fund helps!",
-      donorId: "user_011",
-    },
-    {
-      id: 12,
-      donorName: "Mizanur Rahman",
-      donorEmail: "mizanur.rahman@email.com",
-      amount: 12000,
-      currency: "BDT",
-      fundingDate: "2024-07-09T14:50:00Z",
-      paymentMethod: "Bank Transfer",
-      transactionId: "txn_1234567901",
-      status: "completed",
-      message: "Proud to be part of this life-saving mission.",
-      donorId: "user_012",
-    },
-  ]
+
 
   useEffect(() => {
     const fetchFunds = async () => {
       setIsLoading(true)
       try {
         // Replace with actual API call
-        // const response = await axios.get('/api/funds', {
-        //   headers: { Authorization: `Bearer ${user.token}` }
-        // })
-        // setFunds(response.data.funds)
+        const response = await axiosSecure.get('/payments-history', {
+          // headers: { Authorization: `Bearer ${user.token}` }
+        })
+        setFunds(response.data)
 
         await new Promise((resolve) => setTimeout(resolve, 1000))
-        setFunds(mockFunds)
-        setFilteredFunds(mockFunds)
+        // setFunds(mockFunds)
+        setFilteredFunds(response.data)
 
         // Calculate stats
-        const totalAmount = mockFunds.reduce((sum, fund) => sum + fund.amount, 0)
+        const totalAmount = response.data.reduce((sum, fund) => sum + fund.amount, 0)
         const uniqueDonors = new Set(mockFunds.map((fund) => fund.donorId)).size
         const averageAmount = totalAmount / mockFunds.length
 
         // This month's funds (mock calculation)
-        const thisMonth = mockFunds
+        const thisMonth = response.data
           .filter((fund) => {
             const fundDate = new Date(fund.fundingDate)
             const now = new Date()
@@ -554,7 +398,7 @@ const Funding = () => {
                   <tr>
                     <th className="text-left py-3 px-6 font-medium text-gray-900">Donor</th>
                     <th className="text-left py-3 px-6 font-medium text-gray-900">Amount</th>
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Date</th>
+                    {/* <th className="text-left py-3 px-6 font-medium text-gray-900">Date</th> */}
                     <th className="text-left py-3 px-6 font-medium text-gray-900">Payment Method</th>
                     <th className="text-left py-3 px-6 font-medium text-gray-900">Transaction ID</th>
                     <th className="text-left py-3 px-6 font-medium text-gray-900">Message</th>
@@ -573,9 +417,7 @@ const Funding = () => {
                       <td className="py-4 px-6">
                         <div className="font-semibold text-green-600">{formatCurrency(fund.amount)}</div>
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="text-sm text-gray-900">{formatDate(fund.fundingDate)}</div>
-                      </td>
+                      
                       <td className="py-4 px-6">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {fund.paymentMethod}
@@ -678,122 +520,6 @@ const Funding = () => {
   )
 }
 
-// Give Fund Modal Component
-// const GiveFundModal = ({ isOpen, onClose, onSuccess }) => {
-//   const [amount, setAmount] = useState("")
-//   const [message, setMessage] = useState("")
-//   const [isProcessing, setIsProcessing] = useState(false)
-//   const { user } = useAuth()
 
-//   const handleSubmit = async (e) => {
-//     e.preventDefault()
-
-//     if (!amount || Number.parseFloat(amount) < 100) {
-//       toast.error("Minimum donation amount is ৳100")
-//       return
-//     }
-
-//     setIsProcessing(true)
-
-//     try {
-//       // Stripe payment integration would go here
-//       // For now, we'll simulate the payment process
-
-//       // Step 1: Create payment intent
-//       const paymentIntent = await createPaymentIntent(amount)
-
-//       // Step 2: Process payment with Stripe
-//       const result = await stripe.confirmCardPayment(paymentIntent.client_secret)
-
-//       // Step 3: Save funding record to database
-//       await saveFundingRecord({
-//         amount: parseFloat(amount),
-//         message,
-//         donorId: user.uid,
-//         transactionId: result.paymentIntent.id
-//       })
-
-//       // Simulate processing time
-//       await new Promise((resolve) => setTimeout(resolve, 2000))
-
-//       toast.success("Thank you for your generous donation!")
-//       onSuccess()
-//     } catch (error) {
-//       console.error("Payment failed:", error)
-//       toast.error("Payment failed. Please try again.")
-//     } finally {
-//       setIsProcessing(false)
-//     }
-//   }
-
-//   if (!isOpen) return null
-
-//   return (
-//     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-//       <Card className="w-full max-w-md">
-//         <CardHeader>
-//           <CardTitle className="flex items-center gap-2">
-//             <DollarSign size={20} />
-//             Give Fund
-//           </CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <form onSubmit={handleSubmit} className="space-y-4">
-//             <div>
-//               <label className="block text-sm font-medium text-gray-700 mb-2">Donation Amount (BDT) *</label>
-//               <Input
-//                 type="number"
-//                 min="100"
-//                 step="50"
-//                 value={amount}
-//                 onChange={(e) => setAmount(e.target.value)}
-//                 placeholder="Enter amount (minimum ৳100)"
-//                 required
-//               />
-//             </div>
-
-//             <div>
-//               <label className="block text-sm font-medium text-gray-700 mb-2">Message (Optional)</label>
-//               <textarea
-//                 value={message}
-//                 onChange={(e) => setMessage(e.target.value)}
-//                 placeholder="Leave a message of support..."
-//                 className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent resize-none"
-//                 rows="3"
-//                 maxLength="200"
-//               />
-//               <div className="text-xs text-gray-500 mt-1">{message.length}/200 characters</div>
-//             </div>
-
-//             <div className="bg-blue-50 p-4 rounded-lg">
-//               <div className="flex items-center gap-2 text-blue-800 mb-2">
-//                 <CreditCard size={16} />
-//                 <span className="font-medium">Secure Payment</span>
-//               </div>
-//               <p className="text-sm text-blue-700">
-//                 Your payment will be processed securely through Stripe. We accept all major credit and debit cards.
-//               </p>
-//             </div>
-
-//             <div className="flex gap-3 pt-4">
-//               <Button
-//                 type="button"
-//                 variant="outline"
-//                 onClick={onClose}
-//                 disabled={isProcessing}
-//                 className="flex-1 bg-transparent"
-//               >
-//                 Cancel
-//               </Button>
-//               <Button type="submit" disabled={isProcessing || !amount} className="flex-1 bg-red-600 hover:bg-red-700">
-//                 {isProcessing ? "Processing..." : `Donate ৳${amount || "0"}`}
-//               </Button>
-//             </div>
-//           </form>
-//         </CardContent>
-//       </Card>
-//     </div>
-//   )
-// }
 
 export default Funding
