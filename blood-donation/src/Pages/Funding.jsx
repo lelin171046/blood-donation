@@ -21,6 +21,7 @@ import {
 import useAuth from "@/Hook/useAuth"
 import { useNavigate } from "react-router-dom"
 import toast from "react-hot-toast"
+import GiveFundModal from "./GiveFundModal"
 
 const Funding = () => {
   const { user } = useAuth()
@@ -678,121 +679,121 @@ const Funding = () => {
 }
 
 // Give Fund Modal Component
-const GiveFundModal = ({ isOpen, onClose, onSuccess }) => {
-  const [amount, setAmount] = useState("")
-  const [message, setMessage] = useState("")
-  const [isProcessing, setIsProcessing] = useState(false)
-  const { user } = useAuth()
+// const GiveFundModal = ({ isOpen, onClose, onSuccess }) => {
+//   const [amount, setAmount] = useState("")
+//   const [message, setMessage] = useState("")
+//   const [isProcessing, setIsProcessing] = useState(false)
+//   const { user } = useAuth()
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+//   const handleSubmit = async (e) => {
+//     e.preventDefault()
 
-    if (!amount || Number.parseFloat(amount) < 100) {
-      toast.error("Minimum donation amount is ৳100")
-      return
-    }
+//     if (!amount || Number.parseFloat(amount) < 100) {
+//       toast.error("Minimum donation amount is ৳100")
+//       return
+//     }
 
-    setIsProcessing(true)
+//     setIsProcessing(true)
 
-    try {
-      // Stripe payment integration would go here
-      // For now, we'll simulate the payment process
+//     try {
+//       // Stripe payment integration would go here
+//       // For now, we'll simulate the payment process
 
-      // Step 1: Create payment intent
-      const paymentIntent = await createPaymentIntent(amount)
+//       // Step 1: Create payment intent
+//       const paymentIntent = await createPaymentIntent(amount)
 
-      // Step 2: Process payment with Stripe
-      const result = await stripe.confirmCardPayment(paymentIntent.client_secret)
+//       // Step 2: Process payment with Stripe
+//       const result = await stripe.confirmCardPayment(paymentIntent.client_secret)
 
-      // Step 3: Save funding record to database
-      await saveFundingRecord({
-        amount: parseFloat(amount),
-        message,
-        donorId: user.uid,
-        transactionId: result.paymentIntent.id
-      })
+//       // Step 3: Save funding record to database
+//       await saveFundingRecord({
+//         amount: parseFloat(amount),
+//         message,
+//         donorId: user.uid,
+//         transactionId: result.paymentIntent.id
+//       })
 
-      // Simulate processing time
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+//       // Simulate processing time
+//       await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      toast.success("Thank you for your generous donation!")
-      onSuccess()
-    } catch (error) {
-      console.error("Payment failed:", error)
-      toast.error("Payment failed. Please try again.")
-    } finally {
-      setIsProcessing(false)
-    }
-  }
+//       toast.success("Thank you for your generous donation!")
+//       onSuccess()
+//     } catch (error) {
+//       console.error("Payment failed:", error)
+//       toast.error("Payment failed. Please try again.")
+//     } finally {
+//       setIsProcessing(false)
+//     }
+//   }
 
-  if (!isOpen) return null
+//   if (!isOpen) return null
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign size={20} />
-            Give Fund
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Donation Amount (BDT) *</label>
-              <Input
-                type="number"
-                min="100"
-                step="50"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount (minimum ৳100)"
-                required
-              />
-            </div>
+//   return (
+//     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+//       <Card className="w-full max-w-md">
+//         <CardHeader>
+//           <CardTitle className="flex items-center gap-2">
+//             <DollarSign size={20} />
+//             Give Fund
+//           </CardTitle>
+//         </CardHeader>
+//         <CardContent>
+//           <form onSubmit={handleSubmit} className="space-y-4">
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-2">Donation Amount (BDT) *</label>
+//               <Input
+//                 type="number"
+//                 min="100"
+//                 step="50"
+//                 value={amount}
+//                 onChange={(e) => setAmount(e.target.value)}
+//                 placeholder="Enter amount (minimum ৳100)"
+//                 required
+//               />
+//             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Message (Optional)</label>
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Leave a message of support..."
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent resize-none"
-                rows="3"
-                maxLength="200"
-              />
-              <div className="text-xs text-gray-500 mt-1">{message.length}/200 characters</div>
-            </div>
+//             <div>
+//               <label className="block text-sm font-medium text-gray-700 mb-2">Message (Optional)</label>
+//               <textarea
+//                 value={message}
+//                 onChange={(e) => setMessage(e.target.value)}
+//                 placeholder="Leave a message of support..."
+//                 className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-400 focus:border-transparent resize-none"
+//                 rows="3"
+//                 maxLength="200"
+//               />
+//               <div className="text-xs text-gray-500 mt-1">{message.length}/200 characters</div>
+//             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="flex items-center gap-2 text-blue-800 mb-2">
-                <CreditCard size={16} />
-                <span className="font-medium">Secure Payment</span>
-              </div>
-              <p className="text-sm text-blue-700">
-                Your payment will be processed securely through Stripe. We accept all major credit and debit cards.
-              </p>
-            </div>
+//             <div className="bg-blue-50 p-4 rounded-lg">
+//               <div className="flex items-center gap-2 text-blue-800 mb-2">
+//                 <CreditCard size={16} />
+//                 <span className="font-medium">Secure Payment</span>
+//               </div>
+//               <p className="text-sm text-blue-700">
+//                 Your payment will be processed securely through Stripe. We accept all major credit and debit cards.
+//               </p>
+//             </div>
 
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={isProcessing}
-                className="flex-1 bg-transparent"
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isProcessing || !amount} className="flex-1 bg-red-600 hover:bg-red-700">
-                {isProcessing ? "Processing..." : `Donate ৳${amount || "0"}`}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
+//             <div className="flex gap-3 pt-4">
+//               <Button
+//                 type="button"
+//                 variant="outline"
+//                 onClick={onClose}
+//                 disabled={isProcessing}
+//                 className="flex-1 bg-transparent"
+//               >
+//                 Cancel
+//               </Button>
+//               <Button type="submit" disabled={isProcessing || !amount} className="flex-1 bg-red-600 hover:bg-red-700">
+//                 {isProcessing ? "Processing..." : `Donate ৳${amount || "0"}`}
+//               </Button>
+//             </div>
+//           </form>
+//         </CardContent>
+//       </Card>
+//     </div>
+//   )
+// }
 
 export default Funding
