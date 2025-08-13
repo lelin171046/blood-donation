@@ -699,18 +699,18 @@ const GiveFundModal = ({ isOpen, onClose, onSuccess }) => {
       // For now, we'll simulate the payment process
 
       // Step 1: Create payment intent
-      // const paymentIntent = await createPaymentIntent(amount)
+      const paymentIntent = await createPaymentIntent(amount)
 
       // Step 2: Process payment with Stripe
-      // const result = await stripe.confirmCardPayment(paymentIntent.client_secret)
+      const result = await stripe.confirmCardPayment(paymentIntent.client_secret)
 
       // Step 3: Save funding record to database
-      // await saveFundingRecord({
-      //   amount: parseFloat(amount),
-      //   message,
-      //   donorId: user.uid,
-      //   transactionId: result.paymentIntent.id
-      // })
+      await saveFundingRecord({
+        amount: parseFloat(amount),
+        message,
+        donorId: user.uid,
+        transactionId: result.paymentIntent.id
+      })
 
       // Simulate processing time
       await new Promise((resolve) => setTimeout(resolve, 2000))
