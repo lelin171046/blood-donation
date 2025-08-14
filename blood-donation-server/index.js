@@ -258,10 +258,7 @@ app.delete("/all-blogs/:id", verifyToken, verifyAdmin, async (req, res) => {
 
        //payment history get
       app.get('/payments-history', verifyToken, async (req,res)=>{
-        // const query = {email : req.params.email};
-        // if(req.params.email !== req.decoded.email){
-        //   return res.status(403).send({message: 'forbidden'})
-        // }
+       
         const result = await paymentCollection.find().toArray();
         res.send(result)
       })
