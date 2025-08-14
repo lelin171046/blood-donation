@@ -118,12 +118,18 @@ const DashboardPage = () => {
                       <span>All Users</span>
                     </NavLink>
                   </li>
+                  <li>
+                <button onClick={handleLogOut} className="flex items-center w-full p-2 space-x-3 rounded-md">
+                  <LogOut className="w-5 h-5 text-gray-600" />
+                  <span>Logout</span>
+                </button>
+              </li>
                 </>
               )}
               <li>
-                <NavLink to="/dashboard/user-home" className="flex items-center p-2 space-x-3 rounded-md">
+                <NavLink to="/dashboard/donor-dashboard" className="flex items-center p-2 space-x-3 rounded-md">
                   <Home className="w-5 h-5 text-gray-600" />
-                  <span>User Home</span>
+                  <span>Dashbroard</span>
                 </NavLink>
               </li>
              
@@ -133,12 +139,7 @@ const DashboardPage = () => {
                   <span>My Requests</span>
                 </NavLink>
               </li>
-              <li>
-                <NavLink to="/dashboard/payment-history" className="flex items-center p-2 space-x-3 rounded-md">
-                  <DollarSign className="w-5 h-5 text-gray-600" />
-                  <span>Payment History</span>
-                </NavLink>
-              </li>
+             
               <li>
                 <NavLink to="/dashboard/create-request" className="flex items-center p-2 space-x-3 rounded-md">
                   <Calendar className="w-5 h-5 text-gray-600" />

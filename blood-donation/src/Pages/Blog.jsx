@@ -164,7 +164,7 @@ const Blog = () => {
               <h2 className="text-2xl font-bold text-gray-900">Featured Articles</h2>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-8">
+            <div className="grid lg:grid-cols-3 gap-8">
               {blogs?.map((blog) => (
                 <Card
                   key={blog.id}

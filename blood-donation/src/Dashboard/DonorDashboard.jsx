@@ -5,32 +5,48 @@ import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import useAuth from "@/Hook/useAuth"
+import useAxiosSecure from "@/Hook/useAxiosSecure"
 import {
-  Home,
-  Calendar,
-  Clock,
-  MapPin,
   User,
-  Mail,
+  Heart,
+  Calendar,
+  MapPin,
+  Plus,
+  Eye,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  TrendingUp,
+  Activity,
   Edit,
   Trash2,
-  Eye,
-  Plus,
   ArrowRight,
-  Heart,
-  Activity,
+  Shield,
+  UserCheck,
+  HandHeart,
 } from "lucide-react"
 import toast from "react-hot-toast"
 
 const DonorDashboard = () => {
   const { user } = useAuth()
+  const axiosSecure = useAxiosSecure()
   const navigate = useNavigate()
-  const [recentRequests, setRecentRequests] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [recentRequests, setRecentRequests] = useState([])
+  const [userRole, setUserRole] = useState("donor")
+  const [stats, setStats] = useState({
+    totalRequests: 0,
+    pendingRequests: 0,
+    inProgressRequests: 0,
+    completedRequests: 0,
+    cancelledRequests: 0,
+  })
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [requestToDelete, setRequestToDelete] = useState(null)
+  const [updatingStatus, setUpdatingStatus] = useState(null)
 
-  // Check authentication
+  // Check authentication and user role
   useEffect(() => {
     if (!user) {
       navigate("/login", {
@@ -41,108 +57,178 @@ const DonorDashboard = () => {
       })
       return
     }
+
+    // Get user role from user object or API
+    const role = user.role || "donor"
+    setUserRole(role)
+
+    fetchDashboardData()
   }, [user, navigate])
 
-  // Mock donation requests data - replace with actual API call
-  const mockRequests = [
-    {
-      id: 1,
-      recipientName: "Sarah Ahmed",
-      recipientDistrict: "Dhaka",
-      recipientUpazila: "Dhanmondi",
-      donationDate: "2024-07-25",
-      donationTime: "10:00 AM",
-      status: "inprogress",
-      donorInfo: {
-        name: "Ahmed Rahman",
-        email: "ahmed.rahman@email.com",
-      },
-      createdAt: "2024-07-20T08:00:00Z",
-      bloodGroup: "A+",
-      urgency: "Critical",
-    },
-    {
-      id: 2,
-      recipientName: "Mohammad Hasan",
-      recipientDistrict: "Chittagong",
-      recipientUpazila: "Agrabad",
-      donationDate: "2024-07-24",
-      donationTime: "2:00 PM",
-      status: "pending",
-      donorInfo: null,
-      createdAt: "2024-07-19T14:30:00Z",
-      bloodGroup: "O-",
-      urgency: "Urgent",
-    },
-    {
-      id: 3,
-      recipientName: "Rashida Begum",
-      recipientDistrict: "Dhaka",
-      recipientUpazila: "Panthapath",
-      donationDate: "2024-07-26",
-      donationTime: "9:00 AM",
-      status: "done",
-      donorInfo: {
-        name: "Fatima Khatun",
-        email: "fatima.khatun@email.com",
-      },
-      createdAt: "2024-07-21T10:15:00Z",
-      bloodGroup: "B+",
-      urgency: "Moderate",
-    },
-  ]
-
-  useEffect(() => {
-    const fetchRecentRequests = async () => {
-      setIsLoading(true)
-      try {
-        // Replace with actual API call
-        // const response = await axios.get(`/api/donation-requests/user/${user.uid}?limit=3`)
-        // setRecentRequests(response.data.requests)
-
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        setRecentRequests(mockRequests)
-      } catch (error) {
-        console.error("Failed to fetch recent requests:", error)
-        toast.error("Failed to load recent donation requests")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    if (user) {
-      fetchRecentRequests()
-    }
-  }, [user])
-
-  const handleStatusChange = async (requestId, newStatus) => {
+  const fetchDashboardData = async () => {
     try {
-      // Replace with actual API call
-      // await axios.patch(`/api/donation-requests/${requestId}`, { status: newStatus })
+      setIsLoading(true)
 
-      setRecentRequests((prev) =>
-        prev.map((request) => (request.id === requestId ? { ...request, status: newStatus } : request)),
-      )
+      // Fetch recent requests based on user role
+      let endpoint = ""
+      if (userRole === "admin") {
+        endpoint = "/api/donation-requests/all?limit=3"
+      } else if (userRole === "volunteer") {
+        endpoint = `/api/volunteer-requests/${user.uid}?limit=3`
+      } else {
+        endpoint = `/api/users/${user.uid}/donation-requests?limit=3`
+      }
 
-      toast.success(`Request marked as ${newStatus}`)
+      const response = await axiosSecure.get(endpoint)
+
+      if (response.data && response.data.success) {
+        setRecentRequests(response.data.requests || [])
+
+        // Calculate stats from all requests
+        const allRequestsEndpoint = endpoint.replace("?limit=3", "")
+        const allRequestsResponse = await axiosSecure.get(allRequestsEndpoint)
+
+        if (allRequestsResponse.data && allRequestsResponse.data.success) {
+          const allRequests = allRequestsResponse.data.requests || []
+          setStats({
+            totalRequests: allRequests.length,
+            pendingRequests: allRequests.filter((req) => req.status === "pending").length,
+            inProgressRequests: allRequests.filter((req) => req.status === "inprogress").length,
+            completedRequests: allRequests.filter((req) => req.status === "done").length,
+            cancelledRequests: allRequests.filter((req) => req.status === "canceled").length,
+          })
+        }
+      }
     } catch (error) {
-      console.error("Failed to update status:", error)
-      toast.error("Failed to update request status")
+      console.error("Failed to fetch dashboard data:", error)
+      toast.error("Failed to load dashboard data")
+
+      // Mock data for development
+      const mockRequests = [
+        {
+          _id: "1",
+          recipientName: "Ahmed Rahman",
+          bloodGroup: "A+",
+          recipientDistrict: "Dhaka",
+          recipientUpazila: "Dhanmondi",
+          donationDate: "2024-01-20",
+          donationTime: "14:30",
+          status: "pending",
+          hospitalName: "Dhaka Medical College Hospital",
+          requestMessage: "Urgent blood needed for surgery",
+          createdAt: "2024-01-15T10:30:00Z",
+        },
+        {
+          _id: "2",
+          recipientName: "Fatima Khatun",
+          bloodGroup: "B+",
+          recipientDistrict: "Chittagong",
+          recipientUpazila: "Kotwali",
+          donationDate: "2024-01-22",
+          donationTime: "10:00",
+          status: "inprogress",
+          hospitalName: "Chittagong Medical College Hospital",
+          requestMessage: "Blood needed for accident victim",
+          donorInfo: {
+            name: "Mohammad Hasan",
+            email: "hasan@example.com",
+          },
+          createdAt: "2024-01-16T14:15:00Z",
+        },
+        {
+          _id: "3",
+          recipientName: "Rashida Begum",
+          bloodGroup: "O-",
+          recipientDistrict: "Sylhet",
+          recipientUpazila: "Sylhet Sadar",
+          donationDate: "2024-01-18",
+          donationTime: "16:00",
+          status: "done",
+          hospitalName: "Sylhet MAG Osmani Medical College Hospital",
+          requestMessage: "Emergency blood requirement",
+          createdAt: "2024-01-12T09:45:00Z",
+        },
+      ]
+
+      setRecentRequests(mockRequests)
+      setStats({
+        totalRequests: 3,
+        pendingRequests: 1,
+        inProgressRequests: 1,
+        completedRequests: 1,
+        cancelledRequests: 0,
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleDelete = async (requestId) => {
+  const handleStatusUpdate = async (requestId, newStatus) => {
+    setUpdatingStatus(requestId)
     try {
-      // Replace with actual API call
-      // await axios.delete(`/api/donation-requests/${requestId}`)
+      const endpoint =
+        userRole === "admin" ? `/api/donation-requests/${requestId}/admin` : `/api/donation-requests/${requestId}`
 
-      setRecentRequests((prev) => prev.filter((request) => request.id !== requestId))
+      await axiosSecure.patch(endpoint, {
+        status: newStatus,
+        requesterId: user.uid,
+      })
+
+      // Update local state
+      setRecentRequests((prev) =>
+        prev.map((request) => (request._id === requestId ? { ...request, status: newStatus } : request)),
+      )
+
+      toast.success(`Request marked as ${newStatus}`)
+
+      // Refresh stats
+      fetchDashboardData()
+    } catch (error) {
+      console.error("Failed to update status:", error)
+      toast.error("Failed to update request status")
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
+  const handleDeleteRequest = async () => {
+    if (!requestToDelete) return
+
+    try {
+      const endpoint =
+        userRole === "admin"
+          ? `/api/donation-requests/${requestToDelete._id}/admin`
+          : `/api/donation-requests/${requestToDelete._id}`
+
+      await axiosSecure.delete(endpoint)
+
+      // Remove from local state
+      setRecentRequests((prev) => prev.filter((request) => request._id !== requestToDelete._id))
+
+      toast.success("Donation request deleted successfully")
       setShowDeleteModal(false)
       setRequestToDelete(null)
-      toast.success("Donation request deleted successfully")
+
+      // Refresh stats
+      fetchDashboardData()
     } catch (error) {
       console.error("Failed to delete request:", error)
       toast.error("Failed to delete donation request")
+    }
+  }
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "pending":
+        return <Clock className="h-4 w-4 text-yellow-500" />
+      case "inprogress":
+        return <Activity className="h-4 w-4 text-blue-500" />
+      case "done":
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case "canceled":
+        return <XCircle className="h-4 w-4 text-red-500" />
+      default:
+        return <AlertCircle className="h-4 w-4 text-gray-500" />
     }
   }
 
@@ -161,6 +247,32 @@ const DonorDashboard = () => {
     }
   }
 
+  const getRoleIcon = (role) => {
+    switch (role) {
+      case "admin":
+        return <Shield className="h-5 w-5 text-purple-600" />
+      case "volunteer":
+        return <HandHeart className="h-5 w-5 text-blue-600" />
+      case "donor":
+        return <Heart className="h-5 w-5 text-red-600" />
+      default:
+        return <UserCheck className="h-5 w-5 text-gray-600" />
+    }
+  }
+
+  const getRoleBadgeColor = (role) => {
+    switch (role) {
+      case "admin":
+        return "bg-purple-100 text-purple-800 border-purple-200"
+      case "volunteer":
+        return "bg-blue-100 text-blue-800 border-blue-200"
+      case "donor":
+        return "bg-red-100 text-red-800 border-red-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
+    }
+  }
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -169,204 +281,331 @@ const DonorDashboard = () => {
     })
   }
 
-  if (!user) {
-    return null
+  const formatTime = (timeString) => {
+    if (!timeString) return ""
+    const [hours, minutes] = timeString.split(":")
+    const hour12 = hours % 12 || 12
+    const ampm = hours >= 12 ? "PM" : "AM"
+    return `${hour12}:${minutes} ${ampm}`
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    )
+  const getCreateButtonText = () => {
+    switch (userRole) {
+      case "admin":
+        return "Manage Requests"
+      case "volunteer":
+        return "Create Request"
+      case "donor":
+        return "Create Request"
+      default:
+        return "Create Request"
+    }
+  }
+
+  const getCreateButtonAction = () => {
+    switch (userRole) {
+      case "admin":
+        return () => navigate("/dashboard/all-blood-donation-request")
+      case "volunteer":
+        return () => navigate("/dashboard/create-donation-request")
+      case "donor":
+        return () => navigate("/dashboard/create-donation-request")
+      default:
+        return () => navigate("/dashboard/create-donation-request")
+    }
+  }
+
+  const getViewAllButtonAction = () => {
+    switch (userRole) {
+      case "admin":
+        return () => navigate("/dashboard/all-blood-donation-request")
+      case "volunteer":
+        return () => navigate("/dashboard/my-donation-requests")
+      case "donor":
+        return () => navigate("/dashboard/my-donation-requests")
+      default:
+        return () => navigate("/dashboard/my-donation-requests")
+    }
+  }
+
+  if (!user) {
+    return null
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-7xl">
-        {/* Welcome Section */}
+        {/* Welcome Header */}
         <div className="mb-8">
-          <Card className="bg-gradient-to-r from-red-600 to-red-700 text-white">
-            <CardContent className="p-8">
-              <div className="flex items-center gap-4">
-                <div className="bg-white/20 p-4 rounded-full">
-                  <Home size={32} />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold mb-2">Welcome back, {user.displayName || user.email}!</h1>
-                  <p className="text-red-100 text-lg">
-                    Thank you for being a life-saver. Your generosity makes a difference every day.
-                  </p>
-                </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Welcome back, {user.displayName || user.name || user.email?.split("@")[0] || "User"}!
+                </h1>
+                <span
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getRoleBadgeColor(userRole)}`}
+                >
+                  {getRoleIcon(userRole)}
+                  <span className="ml-1 capitalize">{userRole}</span>
+                </span>
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-gray-600">
+                {userRole === "admin" && "Manage all donation requests and users in the system"}
+                {userRole === "volunteer" && "Create and manage donation requests to help save lives"}
+                {userRole === "donor" && "Manage your donation requests and help save lives"}
+              </p>
+            </div>
+            <Button onClick={getCreateButtonAction()} className="bg-red-600 hover:bg-red-700 flex items-center gap-2">
+              <Plus size={16} />
+              {getCreateButtonText()}
+            </Button>
+          </div>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <Card className="border-l-4 border-l-blue-500">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Requests</p>
-                  <p className="text-2xl font-bold text-gray-900">{recentRequests.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalRequests}</p>
                 </div>
-                <div className="bg-blue-100 p-3 rounded-full">
-                  <Activity className="h-6 w-6 text-blue-600" />
-                </div>
+                <Activity className="h-8 w-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-l-4 border-l-yellow-500">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {recentRequests.filter((r) => r.status === "done").length}
-                  </p>
+                  <p className="text-sm font-medium text-gray-600">Pending</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.pendingRequests}</p>
                 </div>
-                <div className="bg-green-100 p-3 rounded-full">
-                  <Heart className="h-6 w-6 text-green-600" />
-                </div>
+                <Clock className="h-8 w-8 text-yellow-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-l-4 border-l-blue-600">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">In Progress</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {recentRequests.filter((r) => r.status === "inprogress").length}
-                  </p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.inProgressRequests}</p>
                 </div>
-                <div className="bg-orange-100 p-3 rounded-full">
-                  <Clock className="h-6 w-6 text-orange-600" />
+                <TrendingUp className="h-8 w-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-green-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Completed</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.completedRequests}</p>
                 </div>
+                <CheckCircle className="h-8 w-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-red-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Cancelled</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.cancelledRequests}</p>
+                </div>
+                <XCircle className="h-8 w-8 text-red-500" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Recent Donation Requests */}
-        {recentRequests.length > 0 && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar size={20} />
-                Recent Donation Requests
-              </CardTitle>
+        {/* Recent Requests */}
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+              <p className="text-gray-500 mt-2">Loading your requests...</p>
+            </CardContent>
+          </Card>
+        ) : recentRequests.length > 0 ? (
+          <Card>
+            <CardHeader className="bg-white border-b">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-gray-900">
+                  <Heart className="h-5 w-5 text-red-600" />
+                  Recent Donation Requests
+                  {userRole === "admin" && <span className="text-sm font-normal text-gray-500">(All Requests)</span>}
+                  {userRole === "volunteer" && (
+                    <span className="text-sm font-normal text-gray-500">(Your Created Requests)</span>
+                  )}
+                  {userRole === "donor" && <span className="text-sm font-normal text-gray-500">(Your Requests)</span>}
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  onClick={getViewAllButtonAction()}
+                  className="flex items-center gap-2 bg-transparent"
+                >
+                  View All Requests
+                  <ArrowRight size={16} />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <th className="text-left py-3 px-6 font-medium text-gray-900">Recipient</th>
-                      <th className="text-left py-3 px-6 font-medium text-gray-900">Location</th>
-                      <th className="text-left py-3 px-6 font-medium text-gray-900">Date & Time</th>
-                      <th className="text-left py-3 px-6 font-medium text-gray-900">Status</th>
-                      <th className="text-left py-3 px-6 font-medium text-gray-900">Donor Info</th>
-                      <th className="text-left py-3 px-6 font-medium text-gray-900">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Recipient Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Recipient Location
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Donation Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Donation Time
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Donor Information
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="bg-white divide-y divide-gray-200">
                     {recentRequests.map((request) => (
-                      <tr key={request.id} className="hover:bg-gray-50">
-                        <td className="py-4 px-6">
-                          <div>
-                            <div className="font-medium text-gray-900">{request.recipientName}</div>
-                            <div className="text-sm text-gray-500">{request.bloodGroup}</div>
+                      <tr key={request._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 text-gray-400 mr-2" />
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{request.recipientName}</div>
+                              <div className="text-sm text-gray-500">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                  {request.bloodGroup}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <MapPin size={14} />
-                            {request.recipientUpazila}, {request.recipientDistrict}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <MapPin className="h-4 w-4 text-gray-400 mr-1" />
+                            <div>
+                              <div>{request.recipientDistrict}</div>
+                              <div className="text-xs text-gray-500">{request.recipientUpazila}</div>
+                            </div>
                           </div>
                         </td>
-                        <td className="py-4 px-6">
-                          <div className="text-sm">
-                            <div className="font-medium">{formatDate(request.donationDate)}</div>
-                            <div className="text-gray-500">{request.donationTime}</div>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <Calendar className="h-4 w-4 text-gray-400 mr-1" />
+                            {formatDate(request.donationDate)}
                           </div>
                         </td>
-                        <td className="py-4 px-6">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <Clock className="h-4 w-4 text-gray-400 mr-1" />
+                            {formatTime(request.donationTime)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="space-y-2">
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(request.status)}`}
                             >
-                              {request.status}
+                              {getStatusIcon(request.status)}
+                              <span className="ml-1 capitalize">{request.status}</span>
                             </span>
-                            {request.status === "inprogress" && (
-                              <div className="flex gap-1">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleStatusChange(request.id, "done")}
-                                  className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 h-6"
-                                >
-                                  Done
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleStatusChange(request.id, "canceled")}
-                                  className="text-red-600 border-red-300 hover:bg-red-50 text-xs px-2 py-1 h-6 bg-transparent"
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            )}
+
+                            {/* Status Action Buttons - Only for donors and volunteers on their own requests */}
+                            {request.status === "inprogress" &&
+                              (userRole === "donor" || userRole === "volunteer" || userRole === "admin") && (
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleStatusUpdate(request._id, "done")}
+                                    disabled={updatingStatus === request._id}
+                                    className="bg-green-600 hover:bg-green-700 text-xs px-2 py-1 h-6"
+                                  >
+                                    {updatingStatus === request._id ? "..." : "Done"}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleStatusUpdate(request._id, "canceled")}
+                                    disabled={updatingStatus === request._id}
+                                    className="text-red-600 border-red-300 hover:bg-red-50 text-xs px-2 py-1 h-6 bg-transparent"
+                                  >
+                                    {updatingStatus === request._id ? "..." : "Cancel"}
+                                  </Button>
+                                </div>
+                              )}
                           </div>
                         </td>
-                        <td className="py-4 px-6">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           {request.status === "inprogress" && request.donorInfo ? (
                             <div className="text-sm">
-                              <div className="font-medium flex items-center gap-1">
-                                <User size={12} />
-                                {request.donorInfo.name}
-                              </div>
-                              <div className="text-gray-500 flex items-center gap-1">
-                                <Mail size={12} />
-                                {request.donorInfo.email}
-                              </div>
+                              <div className="font-medium text-gray-900">{request.donorInfo.name}</div>
+                              <div className="text-gray-500">{request.donorInfo.email}</div>
                             </div>
                           ) : (
-                            <span className="text-gray-400 text-sm">No donor assigned</span>
+                            <span className="text-sm text-gray-400">-</span>
                           )}
                         </td>
-                        <td className="py-4 px-6">
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex gap-1">
+                            {/* Edit button - Only for request owners or admins */}
+                            {(userRole === "admin" ||
+                              (userRole === "volunteer" && request.createdBy === user.uid) ||
+                              (userRole === "donor" && request.requesterId === user.uid)) && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => navigate(`/dashboard/edit-request/${request._id}`)}
+                                className="bg-transparent"
+                                disabled={request.status === "done" || request.status === "canceled"}
+                              >
+                                <Edit size={14} />
+                              </Button>
+                            )}
+
+                            {/* Delete button - Only for request owners or admins */}
+                            {(userRole === "admin" ||
+                              (userRole === "volunteer" && request.createdBy === user.uid) ||
+                              (userRole === "donor" && request.requesterId === user.uid)) && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setRequestToDelete(request)
+                                  setShowDeleteModal(true)
+                                }}
+                                className="text-red-600 border-red-300 hover:bg-red-50 bg-transparent"
+                                disabled={request.status === "inprogress"}
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            )}
+
+                            {/* View button - Available for all */}
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => navigate(`/dashboard/edit-request/${request.id}`)}
-                              className="bg-transparent"
-                            >
-                              <Edit size={14} />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setRequestToDelete(request)
-                                setShowDeleteModal(true)
-                              }}
-                              className="text-red-600 border-red-300 hover:bg-red-50 bg-transparent"
-                            >
-                              <Trash2 size={14} />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => navigate(`/dashboard/request-details/${request.id}`)}
+                              onClick={() => navigate(`/dashboard/request-details/${request._id}`)}
                               className="bg-transparent"
                             >
                               <Eye size={14} />
@@ -382,48 +621,37 @@ const DonorDashboard = () => {
               {/* View All Requests Button */}
               <div className="p-6 border-t bg-gray-50">
                 <Button
-                  onClick={() => navigate("/dashboard/my-donation-requests")}
+                  onClick={getViewAllButtonAction()}
                   className="w-full bg-red-600 hover:bg-red-700 flex items-center justify-center gap-2"
                 >
-                  View My All Requests
+                  {userRole === "admin" ? "View All Requests" : "View My All Requests"}
                   <ArrowRight size={16} />
                 </Button>
               </div>
             </CardContent>
           </Card>
+        ) : (
+          // No requests state - this section will be hidden as per requirements
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="p-8 text-center">
+              <Heart className="mx-auto h-12 w-12 text-blue-500 mb-4" />
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                {userRole === "admin" ? "No Requests in System" : "No Donation Requests Yet"}
+              </h3>
+              <p className="text-blue-700 mb-4">
+                {userRole === "admin" && "There are no donation requests in the system yet."}
+                {userRole === "volunteer" &&
+                  "You haven't created any donation requests yet. Create your first request to help someone in need."}
+                {userRole === "donor" &&
+                  "You haven't created any donation requests yet. Create your first request to help someone in need."}
+              </p>
+              <Button onClick={getCreateButtonAction()} className="bg-red-600 hover:bg-red-700">
+                <Plus size={16} className="mr-2" />
+                {userRole === "admin" ? "Manage System" : "Create Your First Request"}
+              </Button>
+            </CardContent>
+          </Card>
         )}
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              <Button
-                onClick={() => navigate("/create-request")}
-                className="bg-red-600 hover:bg-red-700 flex items-center gap-2 p-6 h-auto"
-              >
-                <Plus size={20} />
-                <div className="text-left">
-                  <div className="font-medium">Create New Request</div>
-                  <div className="text-sm opacity-90">Request blood donation</div>
-                </div>
-              </Button>
-              <Button
-                onClick={() => navigate("/dashboard/my-donation-requests")}
-                variant="outline"
-                className="flex items-center gap-2 p-6 h-auto bg-transparent"
-              >
-                <Activity size={20} />
-                <div className="text-left">
-                  <div className="font-medium">My All Requests</div>
-                  <div className="text-sm text-gray-500">View and manage requests</div>
-                </div>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Delete Confirmation Modal */}
         {showDeleteModal && requestToDelete && (
@@ -451,10 +679,7 @@ const DonorDashboard = () => {
                   >
                     Cancel
                   </Button>
-                  <Button
-                    onClick={() => handleDelete(requestToDelete.id)}
-                    className="flex-1 bg-red-600 hover:bg-red-700"
-                  >
+                  <Button onClick={handleDeleteRequest} className="flex-1 bg-red-600 hover:bg-red-700">
                     Delete
                   </Button>
                 </div>

@@ -79,10 +79,7 @@ const router = createBrowserRouter([
         path: 'search',
         element: <SearchPage></SearchPage>
       },
-      {
-        path: 'donor-dashboard',
-        element: <DonorDashboard></DonorDashboard>
-      },
+     
       {
         path: 'blog/:id',
         element: <BlogDetails></BlogDetails>
@@ -123,6 +120,10 @@ const router = createBrowserRouter([
       {
         path: 'content-manage/add-blog',
         element: <Example></Example>
+      },
+       {
+        path: 'donor-dashboard',
+        element: <DonorDashboard></DonorDashboard>
       },
       {
         path: 'manage-content',

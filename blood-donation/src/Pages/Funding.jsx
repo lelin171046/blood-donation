@@ -34,7 +34,8 @@ const Funding = () => {
   const [dateFilter, setDateFilter] = useState("all")
   const [amountFilter, setAmountFilter] = useState("all")
   const [showGiveFundModal, setShowGiveFundModal] = useState(false)
-const axiosSecure = useAxiosSecure()
+  const axiosSecure = useAxiosSecure()
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
@@ -60,46 +61,83 @@ const axiosSecure = useAxiosSecure()
     }
   }, [user, navigate])
 
-  // Mock funding data - replace with actual API call
-
-
   useEffect(() => {
     const fetchFunds = async () => {
       setIsLoading(true)
       try {
-        // Replace with actual API call
-        const response = await axiosSecure.get('/payments-history', {
-          // headers: { Authorization: `Bearer ${user.token}` }
-        })
-        setFunds(response.data)
+        // Fetch payment history from API
+        const response = await axiosSecure.get("/payments-history")
+        console.log("Fetched funds data:", response.data)
 
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        // setFunds(mockFunds)
-        setFilteredFunds(response.data)
+        const fundsData = response.data || []
+        setFunds(fundsData)
+        setFilteredFunds(fundsData)
 
-        // Calculate stats
-        const totalAmount = response.data.reduce((sum, fund) => sum + fund.amount, 0)
-        const uniqueDonors = new Set(mockFunds.map((fund) => fund.donorId)).size
-        const averageAmount = totalAmount / mockFunds.length
+        // Calculate stats from real API data
+        if (fundsData.length > 0) {
+          // Calculate total amount
+          const totalAmount = fundsData.reduce((sum, fund) => {
+            const amount = Number(fund.amount) || 0
+            return sum + amount
+          }, 0)
 
-        // This month's funds (mock calculation)
-        const thisMonth = response.data
-          .filter((fund) => {
-            const fundDate = new Date(fund.fundingDate)
-            const now = new Date()
-            return fundDate.getMonth() === now.getMonth() && fundDate.getFullYear() === now.getFullYear()
+          // Calculate unique donors (based on email)
+          const uniqueEmails = new Set(fundsData.map((fund) => fund.email).filter((email) => email))
+          const uniqueDonors = uniqueEmails.size
+
+          // Calculate average donation
+          const averageAmount = fundsData.length > 0 ? totalAmount / fundsData.length : 0
+
+          // Calculate this month's funds
+          const now = new Date()
+          const currentMonth = now.getMonth()
+          const currentYear = now.getFullYear()
+
+          const thisMonth = fundsData
+            .filter((fund) => {
+              const fundDate = new Date(fund.date || fund.createdAt || fund.fundingDate)
+              return fundDate.getMonth() === currentMonth && fundDate.getFullYear() === currentYear
+            })
+            .reduce((sum, fund) => {
+              const amount = Number(fund.amount) || 0
+              return sum + amount
+            }, 0)
+
+          setStats({
+            totalFunds: totalAmount,
+            totalDonors: uniqueDonors,
+            averageDonation: averageAmount,
+            thisMonthFunds: thisMonth,
           })
-          .reduce((sum, fund) => sum + fund.amount, 0)
 
-        setStats({
-          totalFunds: totalAmount,
-          totalDonors: uniqueDonors,
-          averageDonation: averageAmount,
-          thisMonthFunds: thisMonth,
-        })
+          console.log("Calculated stats:", {
+            totalFunds: totalAmount,
+            totalDonors: uniqueDonors,
+            averageDonation: averageAmount,
+            thisMonthFunds: thisMonth,
+          })
+        } else {
+          // Reset stats if no data
+          setStats({
+            totalFunds: 0,
+            totalDonors: 0,
+            averageDonation: 0,
+            thisMonthFunds: 0,
+          })
+        }
       } catch (error) {
         console.error("Failed to fetch funds:", error)
         toast.error("Failed to load funding data")
+
+        // Set empty data on error
+        setFunds([])
+        setFilteredFunds([])
+        setStats({
+          totalFunds: 0,
+          totalDonors: 0,
+          averageDonation: 0,
+          thisMonthFunds: 0,
+        })
       } finally {
         setIsLoading(false)
       }
@@ -108,7 +146,7 @@ const axiosSecure = useAxiosSecure()
     if (user) {
       fetchFunds()
     }
-  }, [user])
+  }, [user, axiosSecure])
 
   // Filter and search functionality
   useEffect(() => {
@@ -118,9 +156,9 @@ const axiosSecure = useAxiosSecure()
     if (searchQuery.trim()) {
       filtered = filtered.filter(
         (fund) =>
-          fund.donorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          fund.donorEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          fund.transactionId.toLowerCase().includes(searchQuery.toLowerCase()),
+          (fund.donorName && fund.donorName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (fund.email && fund.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (fund.transactionId && fund.transactionId.toLowerCase().includes(searchQuery.toLowerCase())),
       )
     }
 
@@ -128,7 +166,7 @@ const axiosSecure = useAxiosSecure()
     if (dateFilter !== "all") {
       const now = new Date()
       filtered = filtered.filter((fund) => {
-        const fundDate = new Date(fund.fundingDate)
+        const fundDate = new Date(fund.date || fund.createdAt || fund.fundingDate)
         switch (dateFilter) {
           case "today":
             return fundDate.toDateString() === now.toDateString()
@@ -148,15 +186,16 @@ const axiosSecure = useAxiosSecure()
     // Amount filter
     if (amountFilter !== "all") {
       filtered = filtered.filter((fund) => {
+        const amount = Number(fund.amount) || 0
         switch (amountFilter) {
           case "small":
-            return fund.amount < 2000
+            return amount < 50
           case "medium":
-            return fund.amount >= 2000 && fund.amount < 5000
+            return amount >= 50 && amount < 200
           case "large":
-            return fund.amount >= 5000 && fund.amount < 10000
+            return amount >= 200 && amount < 500
           case "xlarge":
-            return fund.amount >= 10000
+            return amount >= 500
           default:
             return true
         }
@@ -173,15 +212,16 @@ const axiosSecure = useAxiosSecure()
   const endIndex = startIndex + itemsPerPage
   const currentFunds = filteredFunds.slice(startIndex, endIndex)
 
-  const formatCurrency = (amount, currency = "BDT") => {
-    return new Intl.NumberFormat("en-BD", {
+  const formatCurrency = (amount, currency = "USD") => {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: currency,
-      minimumFractionDigits: 0,
-    }).format(amount)
+      minimumFractionDigits: 2,
+    }).format(Number(amount) || 0)
   }
 
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A"
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -192,18 +232,23 @@ const axiosSecure = useAxiosSecure()
   }
 
   const handleExportData = () => {
+    if (filteredFunds.length === 0) {
+      toast.error("No data to export")
+      return
+    }
+
     // Create CSV content
     const headers = ["Donor Name", "Email", "Amount", "Date", "Payment Method", "Transaction ID", "Message"]
     const csvContent = [
       headers.join(","),
       ...filteredFunds.map((fund) =>
         [
-          `"${fund.donorName}"`,
-          `"${fund.donorEmail}"`,
-          fund.amount,
-          `"${formatDate(fund.fundingDate)}"`,
-          `"${fund.paymentMethod}"`,
-          `"${fund.transactionId}"`,
+          `"${fund.donorName || "N/A"}"`,
+          `"${fund.email || "N/A"}"`,
+          fund.amount || 0,
+          `"${formatDate(fund.date || fund.createdAt)}"`,
+          `"${fund.paymentMethod || "card"}"`,
+          `"${fund.transactionId || "N/A"}"`,
           `"${fund.message || ""}"`,
         ].join(","),
       ),
@@ -221,6 +266,45 @@ const axiosSecure = useAxiosSecure()
     window.URL.revokeObjectURL(url)
 
     toast.success("Funding data exported successfully!")
+  }
+
+  const handleRefreshData = async () => {
+    setIsLoading(true)
+    try {
+      const response = await axiosSecure.get("/payments-history")
+      const fundsData = response.data || []
+      setFunds(fundsData)
+      setFilteredFunds(fundsData)
+
+      // Recalculate stats
+      if (fundsData.length > 0) {
+        const totalAmount = fundsData.reduce((sum, fund) => sum + (Number(fund.amount) || 0), 0)
+        const uniqueEmails = new Set(fundsData.map((fund) => fund.email).filter((email) => email))
+        const averageAmount = fundsData.length > 0 ? totalAmount / fundsData.length : 0
+
+        const now = new Date()
+        const thisMonth = fundsData
+          .filter((fund) => {
+            const fundDate = new Date(fund.date || fund.createdAt)
+            return fundDate.getMonth() === now.getMonth() && fundDate.getFullYear() === now.getFullYear()
+          })
+          .reduce((sum, fund) => sum + (Number(fund.amount) || 0), 0)
+
+        setStats({
+          totalFunds: totalAmount,
+          totalDonors: uniqueEmails.size,
+          averageDonation: averageAmount,
+          thisMonthFunds: thisMonth,
+        })
+      }
+
+      toast.success("Data refreshed successfully!")
+    } catch (error) {
+      console.error("Failed to refresh data:", error)
+      toast.error("Failed to refresh data")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (!user) {
@@ -259,6 +343,15 @@ const axiosSecure = useAxiosSecure()
             <p className="text-gray-600">Track and manage all funding contributions</p>
           </div>
           <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={handleRefreshData}
+              className="flex items-center gap-2 bg-transparent"
+              disabled={isLoading}
+            >
+              <TrendingUp size={16} />
+              Refresh
+            </Button>
             <Button variant="outline" onClick={handleExportData} className="flex items-center gap-2 bg-transparent">
               <Download size={16} />
               Export Data
@@ -368,10 +461,10 @@ const axiosSecure = useAxiosSecure()
                   className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-red-400 focus:border-transparent"
                 >
                   <option value="all">All Amounts</option>
-                  <option value="small">Under ৳2,000</option>
-                  <option value="medium">৳2,000 - ৳5,000</option>
-                  <option value="large">৳5,000 - ৳10,000</option>
-                  <option value="xlarge">Above ৳10,000</option>
+                  <option value="small">Under $50</option>
+                  <option value="medium">$50 - $200</option>
+                  <option value="large">$200 - $500</option>
+                  <option value="xlarge">Above $500</option>
                 </select>
               </div>
             </div>
@@ -392,56 +485,68 @@ const axiosSecure = useAxiosSecure()
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Donor</th>
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Amount</th>
-                    {/* <th className="text-left py-3 px-6 font-medium text-gray-900">Date</th> */}
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Payment Method</th>
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Transaction ID</th>
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Message</th>
-                    <th className="text-left py-3 px-6 font-medium text-gray-900">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {currentFunds.map((fund) => (
-                    <tr key={fund.id} className="hover:bg-gray-50">
-                      <td className="py-4 px-6">
-                        <div>
-                          <div className="font-medium text-gray-900">{fund.donorName}</div>
-                          <div className="text-sm text-gray-500">{fund.donorEmail}</div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="font-semibold text-green-600">{formatCurrency(fund.amount)}</div>
-                      </td>
-                      
-                      <td className="py-4 px-6">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {fund.paymentMethod}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <code className="text-xs bg-gray-100 px-2 py-1 rounded">{fund.transactionId}</code>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="text-sm text-gray-600 max-w-xs truncate" title={fund.message}>
-                          {fund.message || "No message"}
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <Button variant="outline" size="sm" className="flex items-center gap-1 bg-transparent">
-                          <Eye size={14} />
-                          View
-                        </Button>
-                      </td>
+            {currentFunds.length === 0 ? (
+              <div className="text-center py-12">
+                <DollarSign className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No funding records found</h3>
+                <p className="text-gray-600">
+                  {funds.length === 0 ? "No donations have been made yet." : "No records match your current filters."}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Donor</th>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Amount</th>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Date</th>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Payment Method</th>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Transaction ID</th>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Message</th>
+                      <th className="text-left py-3 px-6 font-medium text-gray-900">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {currentFunds.map((fund, index) => (
+                      <tr key={fund._id || fund.id || index} className="hover:bg-gray-50">
+                        <td className="py-4 px-6">
+                          <div>
+                            <div className="font-medium text-gray-900">{fund.donorName || "Anonymous"}</div>
+                            <div className="text-sm text-gray-500">{fund.email || "N/A"}</div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="font-semibold text-green-600">{formatCurrency(fund.amount)}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm text-gray-900">{formatDate(fund.date || fund.createdAt)}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {fund.paymentMethod || "card"}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6">
+                          <code className="text-xs bg-gray-100 px-2 py-1 rounded">{fund.transactionId || "N/A"}</code>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm text-gray-600 max-w-xs truncate" title={fund.message}>
+                            {fund.message || "No message"}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <Button variant="outline" size="sm" className="flex items-center gap-1 bg-transparent">
+                            <Eye size={14} />
+                            View
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -510,8 +615,7 @@ const axiosSecure = useAxiosSecure()
             onClose={() => setShowGiveFundModal(false)}
             onSuccess={() => {
               setShowGiveFundModal(false)
-              // Refresh funds data
-              window.location.reload()
+              handleRefreshData() // Refresh data instead of page reload
             }}
           />
         )}
@@ -519,7 +623,5 @@ const axiosSecure = useAxiosSecure()
     </div>
   )
 }
-
-
 
 export default Funding

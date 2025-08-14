@@ -31,6 +31,14 @@ const DashboardHome = () => {
     return res.data;
   }
 });
+  const { data: donationFunds = [] } = useQuery({
+  queryKey: ['donationFunds'],
+  queryFn: async () => {
+    const res = await axiosSecure.get('/payments-history');
+     const totalAmount = res.data.reduce((sum, fund) => sum + (Number(fund.amount) || 0), 0)
+    return totalAmount;
+  }
+});
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 p-6">
@@ -90,7 +98,7 @@ const DashboardHome = () => {
                   </div>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-1">
-                  ${stats.totalFunding.toLocaleString()}
+                  ${donationFunds}
                 </h3>
                 <p className="text-gray-600 font-medium">Total Funding</p>
                 <p className="text-sm text-gray-500 mt-2">

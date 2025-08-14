@@ -320,7 +320,7 @@ const Register = () => {
                   <Controller
                     name="upazila"
                     control={control}
-                    rules={{ required: "Upazila is required" }}
+                    // rules={{ required: "Upazila is required" }}
                     render={({ field }) => (
                       <CitySelect
                         countryid={country?.id}

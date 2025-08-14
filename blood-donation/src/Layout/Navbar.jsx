@@ -42,9 +42,9 @@ export const Navbar = () => {
 >
             Home
             </Link>
-            <Link to={'/invoice'}>
+            {/* <Link to={'/invoice'}>
             invoice
-            </Link>
+            </Link> */}
             {navLinks.map((link) => (
               <Link
               
