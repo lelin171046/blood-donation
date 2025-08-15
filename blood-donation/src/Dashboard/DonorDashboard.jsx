@@ -187,46 +187,6 @@ const DonorDashboard = () => {
     return `${hour12}:${minutes} ${ampm}`
   }
 
-  const handleStatusUpdate = async (requestId, newStatus) => {
-    setUpdatingStatus(requestId)
-    try {
-      const endpoint = `/donation/${requestId}`
-
-      await axiosPublic.patch(endpoint, {
-        status: newStatus,
-      })
-
-      toast.success(`Request marked as ${newStatus}`)
-
-      // Refetch data to update the UI
-      refetch()
-    } catch (error) {
-      console.error("Failed to update status:", error)
-      toast.error("Failed to update request status")
-    } finally {
-      setUpdatingStatus(null)
-    }
-  }
-
-  const handleDeleteRequest = async () => {
-    if (!requestToDelete) return
-
-    try {
-      const endpoint = `/donation/${requestToDelete._id}`
-
-      await axiosPublic.delete(endpoint)
-
-      toast.success("Donation request deleted successfully")
-      setShowDeleteModal(false)
-      setRequestToDelete(null)
-
-      // Refetch data to update the UI
-      refetch()
-    } catch (error) {
-      console.error("Failed to delete request:", error)
-      toast.error("Failed to delete donation request")
-    }
-  }
 
   // Check authentication
   useEffect(() => {
@@ -468,7 +428,7 @@ const DonorDashboard = () => {
                             </span>
 
                             {/* Status Action Buttons - Only for donors and volunteers on their own requests */}
-                            {request.status === "inprogress" &&
+                            {/* {request.status === "inprogress" &&
                               (userRole === "donor" || userRole === "volunteer" || userRole === "admin") && (
                                 <div className="flex gap-1">
                                   <Button
@@ -489,7 +449,7 @@ const DonorDashboard = () => {
                                     {updatingStatus === request._id ? "..." : "Cancel"}
                                   </Button>
                                 </div>
-                              )}
+                              )} */}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -505,7 +465,7 @@ const DonorDashboard = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex gap-1">
                             {/* Edit button - Only for request owners or admins */}
-                            {(userRole === "admin" ||
+                            {/* {(userRole === "admin" ||
                               (userRole === "volunteer" && request.createdBy === user.uid) ||
                               (userRole === "donor" && request.requesterId === user.uid)) && (
                               <Button
@@ -517,7 +477,7 @@ const DonorDashboard = () => {
                               >
                                 <Edit size={14} />
                               </Button>
-                            )}
+                            )} */}
 
                             {/* Delete button - Only for request owners or admins */}
                             {(userRole === "admin" ||

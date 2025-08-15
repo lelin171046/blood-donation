@@ -54,7 +54,7 @@ async function run() {
       });
     };
 
-    // Middleware: Verify Admin Role
+      // Middleware: Verify Admin Role
     const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email;
       const user = await usersCollection.findOne({ email });
@@ -64,6 +64,18 @@ async function run() {
       next();
     };
 
+    // Middleware: Verify Volunteer Role
+    const verifyVolunteer = async (req, res, next) => {
+      const email = req.decoded.email;
+      const user = await usersCollection.findOne({ email });
+      if (!user || user.role !== "volunteer" || "admin" ) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
+
+  
+    
     // JWT Token
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -93,7 +105,7 @@ async function run() {
     });
 
     // Get All Users
-    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
+    app.get("/users", verifyToken, verifyVolunteer, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
@@ -130,7 +142,7 @@ async function run() {
     });
 
     // Create Donation Request
-    app.post("/api/donation-requests", verifyToken, async (req, res) => {
+    app.post("/api/donation-requests", verifyToken, verifyVolunteer, async (req, res) => {
       const request = req.body;
       const result = await donationRequestCollection.insertOne(request);
       res.send(result);
@@ -219,7 +231,7 @@ app.get('/donation/:email', async (req, res)=>{
 
 ///add blog
 
-  app.post("/add-blog", verifyToken, verifyAdmin, async (req, res) => {
+  app.post("/add-blog", verifyToken, verifyVolunteer, async (req, res) => {
       const request = req.body;
       const result = await donationBlogCollection.insertOne(request);
       res.send(result);
