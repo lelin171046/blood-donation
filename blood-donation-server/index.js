@@ -248,7 +248,7 @@ app.get('/all-blogs', async (req, res)=>{
       res.send(result);
     });
 /// Delete blog--------------
-app.delete("/all-blogs/:id", verifyToken, verifyAdmin, async (req, res) => {
+app.delete("/all-blogs/:id", verifyToken, verifyVolunteer, async (req, res) => {
       const id = req.params.id;
       const result = await donationBlogCollection.deleteOne({ _id: new ObjectId(id) });
       res.send(result);
