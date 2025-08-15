@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { NavLink, Outlet } from "react-router-dom"
+import { useNavigate, NavLink, Outlet } from "react-router-dom"
 import useAuth from "@/Hook/useAuth"
 import useAdmin from "@/Hook/useAdmin"
+import useVolunteer from "@/Hook/useVolunteer"
 import {
   Home,
   AudioWaveform,
@@ -13,10 +13,8 @@ import {
   Users,
   Menu as MenuIcon,
   ShoppingCart,
-  DollarSign,
   Calendar,
   LogOut,
-  LayoutDashboard,
   Loader2,
   X,
 } from "lucide-react"
@@ -25,27 +23,24 @@ const DashboardPage = () => {
   const { user, logOut, loading } = useAuth()
   const navigate = useNavigate()
   const [isAdmin] = useAdmin()
+  const [isVolunteer] = useVolunteer()
+  const isDonor = !isAdmin && !isVolunteer // if not admin or volunteer, treat as donor
+console.log(isAdmin, 'ok');
   const [isLoading, setIsLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1500)
-
+    const timer = setTimeout(() => setIsLoading(false), 1500)
     return () => clearTimeout(timer)
   }, [])
 
   const handleLogOut = () => {
     logOut()
-      .then(() => {})
+      .then(() => navigate("/"))
       .catch((error) => console.error(error.message))
-    navigate("/")
   }
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen)
-  }
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -78,14 +73,13 @@ const DashboardPage = () => {
               <img src={user?.photoURL} alt="" className="w-12 h-12 rounded-full" />
               <div>
                 <h2 className="text-lg font-semibold">{user?.displayName}</h2>
-                <a href="#" className="text-xs hover:underline dark:text-gray-600">
-                  View profile
-                </a>
+                <span className="text-xs dark:text-gray-600">{user?.email}</span>
               </div>
             </div>
 
             {/* Nav Items */}
             <ul className="pt-2 space-y-1 text-sm">
+              {/* Admin Menu */}
               {isAdmin && (
                 <>
                   <li>
@@ -118,34 +112,52 @@ const DashboardPage = () => {
                       <span>All Users</span>
                     </NavLink>
                   </li>
-                  <li>
-                <button onClick={handleLogOut} className="flex items-center w-full p-2 space-x-3 rounded-md">
-                  <LogOut className="w-5 h-5 text-gray-600" />
-                  <span>Logout</span>
-                </button>
-              </li>
                 </>
               )}
-              <li>
-                <NavLink to="/dashboard/donor-dashboard" className="flex items-center p-2 space-x-3 rounded-md">
-                  <Home className="w-5 h-5 text-gray-600" />
-                  <span>Dashboard</span>
-                </NavLink>
-              </li>
-             
-              <li>
-                <NavLink to="/dashboard/my-donation-requests" className="flex items-center p-2 space-x-3 rounded-md">
-                  <ShoppingCart className="w-5 h-5 text-gray-600" />
-                  <span>My Requests</span>
-                </NavLink>
-              </li>
-             
-              <li>
-                <NavLink to="/dashboard/create-request" className="flex items-center p-2 space-x-3 rounded-md">
-                  <Calendar className="w-5 h-5 text-gray-600" />
-                  <span>Create Request</span>
-                </NavLink>
-              </li>
+
+              {/* Volunteer Menu */}
+              {isVolunteer && !isAdmin && (
+                <>
+                  <li>
+                    <NavLink to="/dashboard/create-request" className="flex items-center p-2 space-x-3 rounded-md">
+                      <Calendar className="w-5 h-5 text-gray-600" />
+                      <span>Create Request</span>
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/dashboard/content-manage/add-blog" className="flex items-center p-2 space-x-3 rounded-md">
+                      <AudioWaveform className="w-5 h-5 text-gray-600" />
+                      <span>Post Blog</span>
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/dashboard/manage-content" className="flex items-center p-2 space-x-3 rounded-md">
+                      <Package className="w-5 h-5 text-gray-600" />
+                      <span>Manage Blog</span>
+                    </NavLink>
+                  </li>
+                </>
+              )}
+
+              {/* Donor Menu */}
+              {isDonor && (
+                <>
+                  <li>
+                    <NavLink to="/dashboard/donor-dashboard" className="flex items-center p-2 space-x-3 rounded-md">
+                      <Home className="w-5 h-5 text-gray-600" />
+                      <span>Donor Dashboard</span>
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/dashboard/my-donation-requests" className="flex items-center p-2 space-x-3 rounded-md">
+                      <ShoppingCart className="w-5 h-5 text-gray-600" />
+                      <span>My Requests</span>
+                    </NavLink>
+                  </li>
+                </>
+              )}
+
+              {/* Logout */}
               <li>
                 <button onClick={handleLogOut} className="flex items-center w-full p-2 space-x-3 rounded-md">
                   <LogOut className="w-5 h-5 text-gray-600" />

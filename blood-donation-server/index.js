@@ -93,6 +93,18 @@ async function run() {
       res.send({ admin: user?.role === "admin" });
     });
 
+      // Check volunteer
+    app.get("/users/volunteer/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        return res.status(403).send({ message: "unauthorized access" });
+      }
+      const user = await usersCollection.findOne({ email });
+      const result = { volunteer: user?.role === "volunteer" }
+      console.log(result);
+      res.send(result);
+    });
+
     // Create User
     app.post("/users", async (req, res) => {
       const user = req.body;

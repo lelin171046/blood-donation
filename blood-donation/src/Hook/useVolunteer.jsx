@@ -9,18 +9,18 @@ const useVolunteer = () => {
 
   const {
     data: isVolunteer ,
-    isPending: isAdminLoading,
+    isPending: isVolunteerLoading,
   } = useQuery({
     queryKey: [user?.email, 'isVolunteer'],
     enabled: !!user?.email, // ✅ Don't run query if email is undefined
     queryFn: async () => {
       const res = await axiosSecure.get(`/users/volunteer/${user?.email}`);
-      // console.log(res.data);
+      console.log(res.data, 'ok fm ');
       return res.data?.volunteer;
     },
   });
 
-  return [isVolunteer, isAdminLoading];
+  return [isVolunteer, isVolunteerLoading];
 };
 
 export default useVolunteer;

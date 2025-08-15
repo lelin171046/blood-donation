@@ -167,7 +167,7 @@ const Blog = () => {
             <div className="grid lg:grid-cols-3 gap-8">
               {blogs?.map((blog) => (
                 <Card
-                  key={blog.id}
+                  key={blog._id}
                   className="group hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden"
                   onClick={() => navigate(`/blog/${blog._id}`)}
                 >
