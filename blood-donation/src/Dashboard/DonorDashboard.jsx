@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import useAuth from "@/Hook/useAuth"
-import useAxiosSecure from "@/Hook/useAxiosSecure"
 import {
   User,
   Heart,
@@ -27,13 +26,13 @@ import {
   HandHeart,
 } from "lucide-react"
 import toast from "react-hot-toast"
+import { useQuery } from "@tanstack/react-query"
+import useAxiosPublic from "@/Hook/useAxiosPublic"
 
 const DonorDashboard = () => {
   const { user } = useAuth()
-  const axiosSecure = useAxiosSecure()
+  const axiosPublic = useAxiosPublic()
   const navigate = useNavigate()
-  const [isLoading, setIsLoading] = useState(true)
-  const [recentRequests, setRecentRequests] = useState([])
   const [userRole, setUserRole] = useState("donor")
   const [stats, setStats] = useState({
     totalRequests: 0,
@@ -46,207 +45,36 @@ const DonorDashboard = () => {
   const [requestToDelete, setRequestToDelete] = useState(null)
   const [updatingStatus, setUpdatingStatus] = useState(null)
 
-  // Check authentication and user role
+  const {
+    data: recentRequests = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["donorRequests", user?.email],
+    queryFn: async () => {
+      if (!user?.email) return []
+      const { data } = await axiosPublic.get(`/donation/${user.email}`)
+      console.log(data)
+      return data || []
+    },
+    enabled: !!user?.email,
+  })
+
+  // Calculate stats when data changes
   useEffect(() => {
-    if (!user) {
-      navigate("/login", {
-        state: {
-          from: "/dashboard",
-          message: "Please log in to access your dashboard",
-        },
-      })
-      return
-    }
-
-    // Get user role from user object or API
-    const role = user.role || "donor"
-    setUserRole(role)
-
-    fetchDashboardData()
-  }, [user, navigate])
-
-  const fetchDashboardData = async () => {
-    try {
-      setIsLoading(true)
-
-      // Fetch recent requests based on user role
-      let endpoint = ""
-      if (userRole === "admin") {
-        endpoint = "/api/donation-requests/all?limit=3"
-      } else if (userRole === "volunteer") {
-        endpoint = `/api/volunteer-requests/${user.uid}?limit=3`
-      } else {
-        endpoint = `/api/users/${user.uid}/donation-requests?limit=3`
-      }
-
-      const response = await axiosSecure.get(endpoint)
-
-      if (response.data && response.data.success) {
-        setRecentRequests(response.data.requests || [])
-
-        // Calculate stats from all requests
-        const allRequestsEndpoint = endpoint.replace("?limit=3", "")
-        const allRequestsResponse = await axiosSecure.get(allRequestsEndpoint)
-
-        if (allRequestsResponse.data && allRequestsResponse.data.success) {
-          const allRequests = allRequestsResponse.data.requests || []
-          setStats({
-            totalRequests: allRequests.length,
-            pendingRequests: allRequests.filter((req) => req.status === "pending").length,
-            inProgressRequests: allRequests.filter((req) => req.status === "inprogress").length,
-            completedRequests: allRequests.filter((req) => req.status === "done").length,
-            cancelledRequests: allRequests.filter((req) => req.status === "canceled").length,
-          })
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error)
-      toast.error("Failed to load dashboard data")
-
-      // Mock data for development
-      const mockRequests = [
-        {
-          _id: "1",
-          recipientName: "Ahmed Rahman",
-          bloodGroup: "A+",
-          recipientDistrict: "Dhaka",
-          recipientUpazila: "Dhanmondi",
-          donationDate: "2024-01-20",
-          donationTime: "14:30",
-          status: "pending",
-          hospitalName: "Dhaka Medical College Hospital",
-          requestMessage: "Urgent blood needed for surgery",
-          createdAt: "2024-01-15T10:30:00Z",
-        },
-        {
-          _id: "2",
-          recipientName: "Fatima Khatun",
-          bloodGroup: "B+",
-          recipientDistrict: "Chittagong",
-          recipientUpazila: "Kotwali",
-          donationDate: "2024-01-22",
-          donationTime: "10:00",
-          status: "inprogress",
-          hospitalName: "Chittagong Medical College Hospital",
-          requestMessage: "Blood needed for accident victim",
-          donorInfo: {
-            name: "Mohammad Hasan",
-            email: "hasan@example.com",
-          },
-          createdAt: "2024-01-16T14:15:00Z",
-        },
-        {
-          _id: "3",
-          recipientName: "Rashida Begum",
-          bloodGroup: "O-",
-          recipientDistrict: "Sylhet",
-          recipientUpazila: "Sylhet Sadar",
-          donationDate: "2024-01-18",
-          donationTime: "16:00",
-          status: "done",
-          hospitalName: "Sylhet MAG Osmani Medical College Hospital",
-          requestMessage: "Emergency blood requirement",
-          createdAt: "2024-01-12T09:45:00Z",
-        },
-      ]
-
-      setRecentRequests(mockRequests)
+    if (recentRequests && Array.isArray(recentRequests)) {
       setStats({
-        totalRequests: 3,
-        pendingRequests: 1,
-        inProgressRequests: 1,
-        completedRequests: 1,
-        cancelledRequests: 0,
+        totalRequests: recentRequests.length,
+        pendingRequests: recentRequests.filter((req) => req.status === "pending").length,
+        inProgressRequests: recentRequests.filter((req) => req.status === "inprogress").length,
+        completedRequests: recentRequests.filter((req) => req.status === "done").length,
+        cancelledRequests: recentRequests.filter((req) => req.status === "canceled").length,
       })
-    } finally {
-      setIsLoading(false)
     }
-  }
+  }, [recentRequests])
 
-  const handleStatusUpdate = async (requestId, newStatus) => {
-    setUpdatingStatus(requestId)
-    try {
-      const endpoint =
-        userRole === "admin" ? `/api/donation-requests/${requestId}/admin` : `/api/donation-requests/${requestId}`
-
-      await axiosSecure.patch(endpoint, {
-        status: newStatus,
-        requesterId: user.uid,
-      })
-
-      // Update local state
-      setRecentRequests((prev) =>
-        prev.map((request) => (request._id === requestId ? { ...request, status: newStatus } : request)),
-      )
-
-      toast.success(`Request marked as ${newStatus}`)
-
-      // Refresh stats
-      fetchDashboardData()
-    } catch (error) {
-      console.error("Failed to update status:", error)
-      toast.error("Failed to update request status")
-    } finally {
-      setUpdatingStatus(null)
-    }
-  }
-
-  const handleDeleteRequest = async () => {
-    if (!requestToDelete) return
-
-    try {
-      const endpoint =
-        userRole === "admin"
-          ? `/api/donation-requests/${requestToDelete._id}/admin`
-          : `/api/donation-requests/${requestToDelete._id}`
-
-      await axiosSecure.delete(endpoint)
-
-      // Remove from local state
-      setRecentRequests((prev) => prev.filter((request) => request._id !== requestToDelete._id))
-
-      toast.success("Donation request deleted successfully")
-      setShowDeleteModal(false)
-      setRequestToDelete(null)
-
-      // Refresh stats
-      fetchDashboardData()
-    } catch (error) {
-      console.error("Failed to delete request:", error)
-      toast.error("Failed to delete donation request")
-    }
-  }
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "pending":
-        return <Clock className="h-4 w-4 text-yellow-500" />
-      case "inprogress":
-        return <Activity className="h-4 w-4 text-blue-500" />
-      case "done":
-        return <CheckCircle className="h-4 w-4 text-green-500" />
-      case "canceled":
-        return <XCircle className="h-4 w-4 text-red-500" />
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-500" />
-    }
-  }
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
-      case "inprogress":
-        return "bg-blue-100 text-blue-800 border-blue-200"
-      case "done":
-        return "bg-green-100 text-green-800 border-green-200"
-      case "canceled":
-        return "bg-red-100 text-red-800 border-red-200"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
-    }
-  }
-
+  // Helper Functions
   const getRoleIcon = (role) => {
     switch (role) {
       case "admin":
@@ -271,22 +99,6 @@ const DonorDashboard = () => {
       default:
         return "bg-gray-100 text-gray-800 border-gray-200"
     }
-  }
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
-  }
-
-  const formatTime = (timeString) => {
-    if (!timeString) return ""
-    const [hours, minutes] = timeString.split(":")
-    const hour12 = hours % 12 || 12
-    const ampm = hours >= 12 ? "PM" : "AM"
-    return `${hour12}:${minutes} ${ampm}`
   }
 
   const getCreateButtonText = () => {
@@ -328,8 +140,132 @@ const DonorDashboard = () => {
     }
   }
 
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "pending":
+        return <Clock className="h-4 w-4 text-yellow-500" />
+      case "inprogress":
+        return <Activity className="h-4 w-4 text-blue-500" />
+      case "done":
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case "canceled":
+        return <XCircle className="h-4 w-4 text-red-500" />
+      default:
+        return <AlertCircle className="h-4 w-4 text-gray-500" />
+    }
+  }
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+      case "inprogress":
+        return "bg-blue-100 text-blue-800 border-blue-200"
+      case "done":
+        return "bg-green-100 text-green-800 border-green-200"
+      case "canceled":
+        return "bg-red-100 text-red-800 border-red-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
+    }
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return ""
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
+  }
+
+  const formatTime = (timeString) => {
+    if (!timeString) return ""
+    const [hours, minutes] = timeString.split(":")
+    const hour12 = hours % 12 || 12
+    const ampm = hours >= 12 ? "PM" : "AM"
+    return `${hour12}:${minutes} ${ampm}`
+  }
+
+  const handleStatusUpdate = async (requestId, newStatus) => {
+    setUpdatingStatus(requestId)
+    try {
+      const endpoint = `/donation/${requestId}`
+
+      await axiosPublic.patch(endpoint, {
+        status: newStatus,
+      })
+
+      toast.success(`Request marked as ${newStatus}`)
+
+      // Refetch data to update the UI
+      refetch()
+    } catch (error) {
+      console.error("Failed to update status:", error)
+      toast.error("Failed to update request status")
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
+  const handleDeleteRequest = async () => {
+    if (!requestToDelete) return
+
+    try {
+      const endpoint = `/donation/${requestToDelete._id}`
+
+      await axiosPublic.delete(endpoint)
+
+      toast.success("Donation request deleted successfully")
+      setShowDeleteModal(false)
+      setRequestToDelete(null)
+
+      // Refetch data to update the UI
+      refetch()
+    } catch (error) {
+      console.error("Failed to delete request:", error)
+      toast.error("Failed to delete donation request")
+    }
+  }
+
+  // Check authentication
+  useEffect(() => {
+    if (!user) {
+      navigate("/login", {
+        state: {
+          from: "/dashboard",
+          message: "Please log in to access your dashboard",
+        },
+      })
+      return
+    }
+
+    // Get user role from user object
+    const role = user.role || "donor"
+    setUserRole(role)
+  }, [user, navigate])
+
   if (!user) {
     return null
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <Card className="bg-red-50 border-red-200">
+            <CardContent className="p-8 text-center">
+              <XCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+              <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Dashboard</h3>
+              <p className="text-red-700 mb-4">Failed to load your donation requests. Please try again.</p>
+              <Button onClick={() => refetch()} className="bg-red-600 hover:bg-red-700">
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -486,7 +422,7 @@ const DonorDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {recentRequests.map((request) => (
+                    {recentRequests.slice(0, 3).map((request) => (
                       <tr key={request._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -631,7 +567,7 @@ const DonorDashboard = () => {
             </CardContent>
           </Card>
         ) : (
-          // No requests state - this section will be hidden as per requirements
+          // No requests state
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="p-8 text-center">
               <Heart className="mx-auto h-12 w-12 text-blue-500 mb-4" />

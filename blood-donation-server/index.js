@@ -12,6 +12,7 @@ const port = process.env.PORT || 5001;
 app.use(cors({
   origin: [
     "http://localhost:5173",
+    "https://blood-donation-e5309.web.app",
     "https://blood-donation-server-steel.vercel.app" // Replace with your actual frontend URL
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -205,6 +206,16 @@ app.patch("/api/donation-requests/:id/donate", verifyToken, async (req, res) => 
     res.status(500).send({ message: "Failed to update donation status" });
   }
 });
+
+//Find the donor donation by email
+app.get('/donation/:email', async (req, res)=>{
+  const email = req.params.email;
+  console.log(email);
+  const query = {donorEmail: email};
+  const result = await donationRequestCollection.find(query).toArray()
+  // console.log(result);
+  res.send(result)
+})
 
 ///add blog
 
